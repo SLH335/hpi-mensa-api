@@ -40,8 +40,61 @@ const (
 	Outlets   Model        = "outlet"
 )
 
+type MealType struct {
+	Id     int
+	NameDe string
+	NameEn string
+}
+
+var UnknownOffer MealType = MealType{
+	Id:     0,
+	NameDe: "Unbekanntes Angebot",
+	NameEn: "Unknown Offer",
+}
+var Offer1 MealType = MealType{
+	Id:     149,
+	NameDe: "Angebot 1",
+	NameEn: "Offer 1",
+}
+var Offer2 MealType = MealType{
+	Id:     150,
+	NameDe: "Angebot 2",
+	NameEn: "Offer 2",
+}
+var Offer3 MealType = MealType{
+	Id:     151,
+	NameDe: "Angebot 3",
+	NameEn: "Offer 3",
+}
+var Offer4 MealType = MealType{
+	Id:     152,
+	NameDe: "Angebot 4",
+	NameEn: "Offer 4",
+}
+var DailySpecial MealType = MealType{
+	Id:     118,
+	NameDe: "Tagesangebot",
+	NameEn: "Daily Special",
+}
+var SaladBar MealType = MealType{
+	Id:     112,
+	NameDe: "Salattheke",
+	NameEn: "Salad bar",
+}
+var Dessert1 MealType = MealType{
+	Id:     119,
+	NameDe: "Dessert 1",
+	NameEn: "Dessert 1",
+}
+var Dessert2 MealType = MealType{
+	Id:     120,
+	NameDe: "Dessert 1",
+	NameEn: "Dessert 2",
+}
+
 type Meal struct {
 	Name         string
+	Type         MealType
 	StudentPrice float64
 	GuestPrice   float64
 	Date         time.Time
@@ -117,12 +170,13 @@ func getMeals(location Location, language Language, day time.Time) (meals []Meal
 
 			additiveIds := strings.Split(string(mealData.GetStringBytes("zusatzstoffeIds")), ",")
 			allergenIds := strings.Split(string(mealData.GetStringBytes("allergeneIds")), ",")
-			featureIds := strings.Split(string(mealData.GetStringBytes("gerichtsmerkmaleIds")), ",")
+			featureIds := strings.Split(string(mealData.GetStringBytes("gerichtmerkmaleIds")), ",")
 
 			for _, additiveId := range additiveIds {
 				for _, additive := range additives {
 					if strconv.Itoa(additive.Id) == additiveId {
 						meal.Additives = append(meal.Additives, additive)
+						break
 					}
 				}
 			}
@@ -130,6 +184,7 @@ func getMeals(location Location, language Language, day time.Time) (meals []Meal
 				for _, allergen := range allergens {
 					if strconv.Itoa(allergen.Id) == allergenId {
 						meal.Allergens = append(meal.Allergens, allergen)
+						break
 					}
 				}
 			}
@@ -137,9 +192,12 @@ func getMeals(location Location, language Language, day time.Time) (meals []Meal
 				for _, feature := range features {
 					if strconv.Itoa(feature.Id) == featureId {
 						meal.Features = append(meal.Features, feature)
+						break
 					}
 				}
 			}
+
+			meal.Type = getMealTypeFromId(mealData.GetInt("speiseplanAdvancedGericht", "gerichtkategorieID"))
 
 			meals = append(meals, meal)
 		}
@@ -164,13 +222,35 @@ func getFeatures(model FeatureModel, location Location, language Language) (feat
 	return features, nil
 }
 
+func getMealTypeFromId(id int) MealType {
+	switch id {
+	case Offer1.Id:
+		return Offer1
+	case Offer2.Id:
+		return Offer2
+	case Offer3.Id:
+		return Offer3
+	case Offer4.Id:
+		return Offer4
+	case DailySpecial.Id:
+		return DailySpecial
+	case SaladBar.Id:
+		return SaladBar
+	case Dessert1.Id:
+		return Dessert1
+	case Dessert2.Id:
+		return Dessert2
+	default:
+		return UnknownOffer
+	}
+}
+
 func getData(model Model, location Location, language Language) (jsonData *fastjson.Value, err error) {
 	params := url.Values{}
 	params.Add("token", "55ed21609e26bbf68ba2b19390bf7961")
 	params.Add("model", string(model))
 	params.Add("location", strconv.Itoa(int(location)))
 	params.Add("languagetype", strconv.Itoa(int((language))))
-	//params.Add("_", fmt.Sprintf("%d", time.Now().UnixMilli()))
 
 	req, err := http.NewRequest(http.MethodGet, baseUrl+"?"+params.Encode(), nil)
 	if err != nil {
@@ -201,5 +281,5 @@ func getData(model Model, location Location, language Language) (jsonData *fastj
 }
 
 func main() {
-	fmt.Println(getMeals(Griebnitzsee, German, time.Now().Add(time.Hour*72)))
+	fmt.Println(getMeals(Griebnitzsee, German, time.Now().Add(time.Hour*24)))
 }
