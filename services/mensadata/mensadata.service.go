@@ -15,36 +15,25 @@ import (
 
 const baseUrl string = "https://swp.webspeiseplan.de/index.php"
 
-func GetMeals(location Location, language Language, day time.Time) (meals []Meal, err error) {
+func GetMeals(location Location, language Language, date time.Time) (meals []Meal, err error) {
 	jsonData, err := getData(MenuModel, location, language)
 	if err != nil {
 		return []Meal{}, err
 	}
-	additives, err := GetMealAttributes(AdditivesModel, location, language)
-	if err != nil {
-		return []Meal{}, err
-	}
-	allergens, err := GetMealAttributes(AllergensModel, location, language)
-	if err != nil {
-		return []Meal{}, err
-	}
-	features, err := GetMealAttributes(FeaturesModel, location, language)
-	if err != nil {
-		return []Meal{}, err
-	}
 
+	meals = []Meal{}
 	for _, mealplan := range jsonData.GetArray() {
 		if string(mealplan.GetStringBytes("speiseplanAdvanced", "titel")) != "Mittagessen" {
 			continue
 		}
 		for _, mealData := range mealplan.GetArray("speiseplanGerichtData") {
-			meal := Meal{}
+			var meal Meal
 
 			meal.Date, err = time.Parse(time.RFC3339, string(mealData.GetStringBytes("speiseplanAdvancedGericht", "datum")))
 			if err != nil {
 				return meals, err
 			}
-			if meal.Date.UTC().Year() != day.UTC().Year() || meal.Date.UTC().YearDay() != day.UTC().YearDay() {
+			if meal.Date.Format("2006-01-02") != date.Format("2006-01-02") {
 				continue
 			}
 
@@ -64,35 +53,44 @@ func GetMeals(location Location, language Language, day time.Time) (meals []Meal
 			meal.Nutrition.Salt = mealData.GetFloat64("zusatzinformationen", "nwsalzDecimal1")
 
 			additiveIds := strings.Split(string(mealData.GetStringBytes("zusatzstoffeIds")), ",")
+			for _, additiveIdStr := range additiveIds {
+				additiveId, err := strconv.Atoi(additiveIdStr)
+				if err != nil {
+					continue
+				}
+				meal.Additives = append(meal.Additives, MealAttribute{
+					Id:   additiveId,
+					Type: AdditiveAttribute,
+				})
+			}
+
 			allergenIds := strings.Split(string(mealData.GetStringBytes("allergeneIds")), ",")
+			for _, allergenIdStr := range allergenIds {
+				allergenId, err := strconv.Atoi(allergenIdStr)
+				if err != nil {
+					continue
+				}
+				meal.Allergens = append(meal.Allergens, MealAttribute{
+					Id:   allergenId,
+					Type: AllergenAttribute,
+				})
+			}
+
 			featureIds := strings.Split(string(mealData.GetStringBytes("gerichtmerkmaleIds")), ",")
-
-			for _, additiveId := range additiveIds {
-				for _, additive := range additives {
-					if strconv.Itoa(additive.Id) == additiveId {
-						meal.Additives = append(meal.Additives, additive)
-						break
-					}
+			for _, featureIdStr := range featureIds {
+				featureId, err := strconv.Atoi(featureIdStr)
+				if err != nil {
+					continue
 				}
-			}
-			for _, allergenId := range allergenIds {
-				for _, allergen := range allergens {
-					if strconv.Itoa(allergen.Id) == allergenId {
-						meal.Allergens = append(meal.Allergens, allergen)
-						break
-					}
-				}
-			}
-			for _, featureId := range featureIds {
-				for _, feature := range features {
-					if strconv.Itoa(feature.Id) == featureId {
-						meal.Features = append(meal.Features, feature)
-						break
-					}
-				}
+				meal.Features = append(meal.Features, MealAttribute{
+					Id:   featureId,
+					Type: FeatureAttribute,
+				})
 			}
 
-			meal.Category = GetMealCategoryFromId(mealData.GetInt("speiseplanAdvancedGericht", "gerichtkategorieID"))
+			meal.Category = MealCategory{
+				Id: mealData.GetInt("speiseplanAdvancedGericht", "gerichtkategorieID"),
+			}
 
 			meals = append(meals, meal)
 		}
@@ -101,20 +99,20 @@ func GetMeals(location Location, language Language, day time.Time) (meals []Meal
 	return meals, nil
 }
 
-func GetMealAttributes(model AttributeModel, location Location, language Language) (attributes []MealAttribute, err error) {
-	jsonData, err := getData(Model(model), location, language)
+func GetMealAttributes(attributeType MealAttributeType, location Location, language Language) (attributes []MealAttribute, err error) {
+	jsonData, err := getData(Model(attributeType+"s"), location, language)
 	if err != nil {
 		return attributes, err
 	}
 
 	for _, attributeData := range jsonData.GetArray() {
 		attribute := MealAttribute{}
-		switch model {
-		case AdditivesModel:
+		switch attributeType {
+		case AdditiveAttribute:
 			attribute.Id = attributeData.GetInt("zusatzstoffeID")
-		case AllergensModel:
+		case AllergenAttribute:
 			attribute.Id = attributeData.GetInt("allergeneID")
-		case FeaturesModel:
+		case FeatureAttribute:
 			attribute.Id = attributeData.GetInt("gerichtmerkmalID")
 		}
 		if language == German {
@@ -123,6 +121,8 @@ func GetMealAttributes(model AttributeModel, location Location, language Languag
 			attribute.NameEn = string(attributeData.GetStringBytes("name"))
 		}
 		attribute.Short = string(attributeData.GetStringBytes("kuerzel"))
+		attribute.Type = attributeType
+		attribute.Location = &location
 		attributes = append(attributes, attribute)
 	}
 	return attributes, nil
@@ -141,6 +141,22 @@ func GetLocations() (locations []Location, err error) {
 		locations = append(locations, location)
 	}
 	return locations, nil
+}
+
+func GetMealCategories(location Location, lang Language) (categories []MealCategory, err error) {
+	jsonData, err := getData(MealCategoryModel, location, lang)
+	if err != nil {
+		return []MealCategory{}, err
+	}
+
+	for _, categoryData := range jsonData.GetArray() {
+		var category MealCategory
+		category.Id = categoryData.GetInt("gerichtkategorieID")
+		category.Name = string(categoryData.GetStringBytes("name"))
+		category.Location = &location
+		categories = append(categories, category)
+	}
+	return categories, nil
 }
 
 func getData(model Model, location Location, language Language) (jsonData *fastjson.Value, err error) {

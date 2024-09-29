@@ -6,22 +6,22 @@ import (
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
-type MealAttributeService struct {
+type MealAttributeDBService struct {
 	DB *sql.DB
 }
 
-func (s *MealAttributeService) GetAll() (features []MealAttribute, err error) {
-	return s.Get(AllAttributes)
+func (s *MealAttributeDBService) GetAll(location Location) (attributes []MealAttribute, err error) {
+	return s.Get(AllAttributes, location)
 }
 
-func (s *MealAttributeService) Get(featureType MealAttributeType) (features []MealAttribute, err error) {
-	stmt := "SELECT * FROM features"
+func (s *MealAttributeDBService) Get(attributeType MealAttributeType, location Location) (attributes []MealAttribute, err error) {
+	stmt := "SELECT * FROM attributes WHERE location_id=?"
 	var rows *sql.Rows
-	if featureType != AllAttributes {
-		stmt += " WHERE type=?"
-		rows, err = s.DB.Query(stmt, featureType)
+	if attributeType != AllAttributes {
+		stmt += " AND type=?"
+		rows, err = s.DB.Query(stmt, location.Id, attributeType)
 	} else {
-		rows, err = s.DB.Query(stmt)
+		rows, err = s.DB.Query(stmt, location.Id)
 	}
 	if err != nil {
 		return []MealAttribute{}, err
@@ -29,26 +29,26 @@ func (s *MealAttributeService) Get(featureType MealAttributeType) (features []Me
 	defer rows.Close()
 
 	for rows.Next() {
-		var feature MealAttribute
-		err = rows.Scan(&feature.Id, &feature.Type, &feature.Short, &feature.NameDe, &feature.NameEn)
+		var attribute MealAttribute
+		err = rows.Scan(&attribute.Id, &attribute.Type, &attribute.Short, &attribute.NameDe, &attribute.NameEn, &attribute.Location.Id)
 		if err != nil {
 			return []MealAttribute{}, err
 		}
-		features = append(features, feature)
+		attributes = append(attributes, attribute)
 	}
 
-	return features, nil
+	return attributes, nil
 }
 
-func (s *MealAttributeService) Add(features []MealAttribute) (err error) {
-	stmt := "INSERT INTO features (id, type, short, name_de, name_en) VALUES "
+func (s *MealAttributeDBService) Add(attributes []MealAttribute) (err error) {
+	stmt := "INSERT INTO attributes (id, type, short, name_de, name_en, location_id) VALUES "
 	args := []any{}
-	for i, feature := range features {
+	for i, attribute := range attributes {
 		if i != 0 {
 			stmt += ", "
 		}
-		stmt += "(?, ?, ?, ?, ?)"
-		args = append(args, feature.Id, feature.Type, feature.Short, feature.NameDe, feature.NameEn)
+		stmt += "(?, ?, ?, ?, ?, ?)"
+		args = append(args, attribute.Id, attribute.Type, attribute.Short, attribute.NameDe, attribute.NameEn, attribute.Location.Id)
 	}
 
 	_, err = s.DB.Exec(stmt, args...)

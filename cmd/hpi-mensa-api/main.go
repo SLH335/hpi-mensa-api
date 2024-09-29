@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"time"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/slh335/hpi-mensa-api/database"
+	"github.com/slh335/hpi-mensa-api/http"
 	"github.com/slh335/hpi-mensa-api/services"
-	. "github.com/slh335/hpi-mensa-api/types"
 )
 
 func main() {
@@ -22,12 +22,36 @@ func main() {
 		return
 	}
 
-	locations, err := mensadata.GetLocations()
-	if err != nil {
-		fmt.Println(err)
-		return
+	server := http.Server{
+		LocationService: &services.LocationService{
+			DbService: &database.LocationDBService{
+				DB: db,
+			},
+		},
+		MealService: &services.MealService{
+			DbService: &database.MealDBService{
+				DB: db,
+			},
+			AttributeService: &services.MealAttributeService{
+				DbService: &database.MealAttributeDBService{
+					DB: db,
+				},
+			},
+			CategoryService: &services.MealCategoryService{
+				DbService: &database.MealCategoryDBService{
+					DB: db,
+				},
+			},
+		},
 	}
-	fmt.Println(locations)
 
-	fmt.Println(mensadata.GetMeals(locations[1], English, time.Now().Add(time.Hour*24)))
+	e := echo.New()
+
+	e.GET("/locations", server.GetLocations)
+	e.GET("/additives/:location", server.GetAdditives)
+	e.GET("/allergens/:location", server.GetAllergens)
+	e.GET("/features/:location", server.GetFeatures)
+	e.GET("/meals/:location", server.GetMeals)
+
+	e.Logger.Fatal(e.Start(":3000"))
 }

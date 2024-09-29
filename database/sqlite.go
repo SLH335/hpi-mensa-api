@@ -13,21 +13,23 @@ func Open(dsn string) (db *sql.DB, err error) {
 
 func CreateTables(db *sql.DB) (err error) {
 	stmt := `CREATE TABLE IF NOT EXISTS "attributes" (
-		"id"		INTEGER NOT NULL,
-		"type"		TEXT NOT NULL,
-		"short"		TEXT NOT NULL,
-		"name_de"	TEXT NOT NULL,
-		"name_en"	TEXT NOT NULL,
-		PRIMARY KEY("id")
+		"id"			INTEGER NOT NULL,
+		"type"			TEXT NOT NULL,
+		"short"			TEXT NOT NULL,
+		"name_de"		TEXT NOT NULL,
+		"name_en"		TEXT NOT NULL,
+		"location_id"	INTEGER NOT NULL,
+		PRIMARY KEY("id","type")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
 		return err
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "categories" (
-		"id"		INTEGER NOT NULL,
-		"name_de"	TEXT NOT NULL,
-		"name_en"	TEXT NOT NULL,
+		"id"			INTEGER NOT NULL,
+		"name_de"		TEXT NOT NULL,
+		"name_en"		TEXT NOT NULL,
+		"location_id"	INTEGER NOT NULL,
 		PRIMARY KEY("id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
@@ -44,9 +46,10 @@ func CreateTables(db *sql.DB) (err error) {
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "meal_attributes" (
-		"meal_id"		INTEGER NOT NULL,
-		"attribute_id"	INTEGER NOT NULL,
-		PRIMARY KEY("meal_id","attribute_id")
+		"meal_id"			INTEGER NOT NULL,
+		"attribute_id"		INTEGER NOT NULL,
+		"attribute_type"	TEXT NOT NULL,
+		PRIMARY KEY("meal_id","attribute_id","attribute_type")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
 		return err
@@ -57,8 +60,8 @@ func CreateTables(db *sql.DB) (err error) {
 		"name_de"		TEXT NOT NULL,
 		"name_en"		TEXT NOT NULL,
 		"category_id"	INTEGER NOT NULL,
-		"price_student"	INTEGER NOT NULL,
-		"price_guest"	INTEGER NOT NULL,
+		"price_student"	REAL NOT NULL,
+		"price_guest"	REAL NOT NULL,
 		"date"			TEXT NOT NULL,
 		"location_id"	INTEGER NOT NULL,
 		FOREIGN KEY("location_id") REFERENCES "locations"("id"),

@@ -8,21 +8,21 @@ import (
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
-type MealService struct {
+type MealDBService struct {
 	DB *sql.DB
 }
 
-func (s *MealService) Get(location Location, day time.Time) (meals []Meal, err error) {
+func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, err error) {
 	// get basic meal data
 	stmt := `SELECT meals.id, meals.name_de, meals.name_en, meals.price_student, meals.price_guest,
 			categories.id, categories.name_de, categories.name_en, locations.id, locations.name,
 			nutrition.kj, nutrition.kcal, nutrition.fat, nutrition.saturated_fat,
-			nutrition.carbohydrates, nutrition.sugar, nutrition.salt FROM meals
+			nutrition.carbohydrates, nutrition.sugar, nutrition.protein, nutrition.salt FROM meals
 		INNER JOIN categories ON categories.id=meals.category_id
 		INNER JOIN locations ON locations.id=meals.location_id
 		INNER JOIN nutrition ON nutrition.meal_id=meals.id
 		WHERE meals.location_id=? AND meals.date=?`
-	dateStr := day.Format("2006-01-02")
+	dateStr := date.Format("2006-01-02")
 	rows, err := s.DB.Query(stmt, location.Id, dateStr)
 	if err != nil {
 		return []Meal{}, err
@@ -36,7 +36,7 @@ func (s *MealService) Get(location Location, day time.Time) (meals []Meal, err e
 			&meal.Category.Id, &meal.Category.NameDe, &meal.Category.NameEn, &meal.Location.Id,
 			&meal.Location.Name, &meal.Nutrition.Kj, &meal.Nutrition.Kcal, &meal.Nutrition.Fat,
 			&meal.Nutrition.SaturatedFat, &meal.Nutrition.Carbohydrates, &meal.Nutrition.Sugar,
-			&meal.Nutrition.Salt,
+			&meal.Nutrition.Protein, &meal.Nutrition.Salt,
 		)
 		if err != nil {
 			return []Meal{}, err
@@ -45,9 +45,14 @@ func (s *MealService) Get(location Location, day time.Time) (meals []Meal, err e
 		meals = append(meals, meal)
 	}
 
+	if len(meals) == 0 {
+		return meals, nil
+	}
+
 	// get meal additives, allergens and features
 	stmt = `SELECT meal_attributes.meal_id, attributes.* FROM meal_attributes
-		INNER JOIN attributes ON meal_attributes.attribute_id=attributes.id WHERE `
+		INNER JOIN attributes ON meal_attributes.attribute_id=attributes.id
+			AND meal_attributes.attribute_type=attributes.type WHERE `
 	args := []any{}
 	for i, meal := range meals {
 		if i != 0 {
@@ -65,21 +70,22 @@ func (s *MealService) Get(location Location, day time.Time) (meals []Meal, err e
 
 	for rows.Next() {
 		var attribute MealAttribute
+		attribute.Location = &Location{}
 		var mealId int
 		err = rows.Scan(&mealId, &attribute.Id, &attribute.Type, &attribute.Short,
-			&attribute.NameDe, &attribute.NameEn)
+			&attribute.NameDe, &attribute.NameEn, &attribute.Location.Id)
 		if err != nil {
 			return []Meal{}, err
 		}
-		for _, meal := range meals {
-			if meal.Id == mealId {
+		for i := range meals {
+			if meals[i].Id == mealId {
 				switch attribute.Type {
 				case AdditiveAttribute:
-					meal.Additives = append(meal.Additives, attribute)
+					meals[i].Additives = append(meals[i].Additives, attribute)
 				case AllergenAttribute:
-					meal.Allergens = append(meal.Allergens, attribute)
+					meals[i].Allergens = append(meals[i].Allergens, attribute)
 				case FeatureAttribute:
-					meal.Features = append(meal.Features, attribute)
+					meals[i].Features = append(meals[i].Features, attribute)
 				}
 				break
 			}
@@ -89,7 +95,7 @@ func (s *MealService) Get(location Location, day time.Time) (meals []Meal, err e
 	return meals, nil
 }
 
-func (s *MealService) Add(meals []Meal) (err error) {
+func (s *MealDBService) Add(meals []Meal) (err error) {
 	if len(meals) == 0 {
 		return fmt.Errorf("error: no meals were provided")
 	}
@@ -125,9 +131,12 @@ func (s *MealService) Add(meals []Meal) (err error) {
 			meal.Nutrition.Protein, meal.Nutrition.Salt)
 	}
 	_, err = s.DB.Exec(stmt, args...)
+	if err != nil {
+		return err
+	}
 
 	// add additives, allergens and features
-	stmt = `INSERT INTO meal_attributes (meal_id, attribute_id) VALUES `
+	stmt = `INSERT INTO meal_attributes (meal_id, attribute_id, attribute_type) VALUES `
 	args = []any{}
 	for i, meal := range meals {
 		mealAttributes := append(meal.Additives, append(meal.Allergens, meal.Features...)...)
@@ -135,11 +144,14 @@ func (s *MealService) Add(meals []Meal) (err error) {
 			if i+j != 0 {
 				stmt += ", "
 			}
-			stmt += "(?, ?)"
-			args = append(args, meal.Id, mealAttribute.Id)
+			stmt += "(?, ?, ?)"
+			args = append(args, meal.Id, mealAttribute.Id, mealAttribute.Type)
 		}
 	}
 	_, err = s.DB.Exec(stmt, args...)
+	if err != nil {
+		return err
+	}
 
 	return err
 }

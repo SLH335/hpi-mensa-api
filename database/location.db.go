@@ -7,11 +7,11 @@ import (
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
-type LocationService struct {
+type LocationDBService struct {
 	DB *sql.DB
 }
 
-func (s *LocationService) GetAll() (locations []Location, err error) {
+func (s *LocationDBService) Get() (locations []Location, err error) {
 	stmt := "SELECT * FROM locations"
 	rows, err := s.DB.Query(stmt)
 	if err != nil {
@@ -31,7 +31,7 @@ func (s *LocationService) GetAll() (locations []Location, err error) {
 	return locations, nil
 }
 
-func (s *LocationService) Add(locations []Location) (err error) {
+func (s *LocationDBService) Add(locations []Location) (err error) {
 	if len(locations) == 0 {
 		return fmt.Errorf("error: no locations were provided")
 	}

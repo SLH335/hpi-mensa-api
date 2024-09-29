@@ -1,2 +1,5 @@
+# Output dir
+tmp/
+
 # Database
 *.db

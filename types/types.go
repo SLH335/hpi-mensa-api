@@ -2,6 +2,12 @@ package types
 
 import "time"
 
+type Response struct {
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	Data    any    `json:"data,omitempty"`
+}
+
 type Location struct {
 	Id   int
 	Name string
@@ -28,9 +34,23 @@ const (
 )
 
 type MealCategory struct {
-	Id     int    `json:"id"`
-	NameDe string `json:"nameDe"`
-	NameEn string `json:"nameEn"`
+	Id       int       `json:"id"`
+	Name     string    `json:"name"`
+	NameDe   string    `json:",omitempty"`
+	NameEn   string    `json:",omitempty"`
+	Location *Location `json:"location,omitempty"`
+}
+
+func (category MealCategory) Translated(language Language) (translated MealCategory) {
+	translated = category
+	if language == German {
+		translated.Name = category.NameDe
+	} else {
+		translated.Name = category.NameEn
+	}
+	translated.NameDe = ""
+	translated.NameEn = ""
+	return translated
 }
 
 var UnknownOffer MealCategory = MealCategory{
@@ -104,9 +124,11 @@ func GetMealCategoryFromId(id int) MealCategory {
 
 type Meal struct {
 	Id           int             `json:"id"`
-	NameDe       string          `json:"nameDe"`
-	NameEn       string          `json:"nameEn"`
+	Name         string          `json:"name"`
+	NameDe       string          `json:",omitempty"`
+	NameEn       string          `json:",omitempty"`
 	Category     MealCategory    `json:"category"`
+	Date         time.Time       `json:"date"`
 	StudentPrice float64         `json:"studentPrice"`
 	GuestPrice   float64         `json:"guestPrice"`
 	Nutrition    Nutrition       `json:"nutrition"`
@@ -114,7 +136,33 @@ type Meal struct {
 	Allergens    []MealAttribute `json:"allergens"`
 	Features     []MealAttribute `json:"features"`
 	Location     Location        `json:"location"`
-	Date         time.Time       `json:"date"`
+}
+
+func (meal Meal) Translated(language Language) (translated Meal) {
+	translated = meal
+	if language == German {
+		translated.Name = meal.NameDe
+	} else {
+		translated.Name = meal.NameEn
+	}
+	translated.NameDe = ""
+	translated.NameEn = ""
+
+	translated.Category = meal.Category.Translated(language)
+
+	translated.Additives = []MealAttribute{}
+	for _, attribute := range meal.Additives {
+		translated.Additives = append(translated.Additives, attribute.Translated(language))
+	}
+	translated.Allergens = []MealAttribute{}
+	for _, attribute := range meal.Allergens {
+		translated.Allergens = append(translated.Allergens, attribute.Translated(language))
+	}
+	translated.Features = []MealAttribute{}
+	for _, attribute := range meal.Features {
+		translated.Features = append(translated.Features, attribute.Translated(language))
+	}
+	return translated
 }
 
 type Nutrition struct {
@@ -129,11 +177,26 @@ type Nutrition struct {
 }
 
 type MealAttribute struct {
-	Id     int               `json:"id"`
-	Type   MealAttributeType `json:"type"`
-	Short  string            `json:"short"`
-	NameDe string            `json:"nameDe"`
-	NameEn string            `json:"nameEn"`
+	Id       int               `json:"id"`
+	Type     MealAttributeType `json:"type,omitempty"`
+	Short    string            `json:"short"`
+	Name     string            `json:"name"`
+	NameDe   string            `json:"nameDe,omitempty"`
+	NameEn   string            `json:"nameEn,omitempty"`
+	Location *Location         `json:"location,omitempty"`
+}
+
+func (attribute MealAttribute) Translated(language Language) (translated MealAttribute) {
+	translated = attribute
+	if language == German {
+		translated.Name = attribute.NameDe
+	} else {
+		translated.Name = attribute.NameEn
+	}
+	translated.NameDe = ""
+	translated.NameEn = ""
+	translated.Type = ""
+	return translated
 }
 
 type MealAttributeType string

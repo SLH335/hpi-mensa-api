@@ -6,13 +6,13 @@ import (
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
-type MealCategoryService struct {
+type MealCategoryDBService struct {
 	DB *sql.DB
 }
 
-func (s *MealCategoryService) Get() (categories []MealCategory, err error) {
-	stmt := "SELECT * FROM categories"
-	rows, err := s.DB.Query(stmt)
+func (s *MealCategoryDBService) Get(location Location) (categories []MealCategory, err error) {
+	stmt := "SELECT * FROM categories WHERE categories.location_id=?"
+	rows, err := s.DB.Query(stmt, location.Id)
 	if err != nil {
 		return []MealCategory{}, err
 	}
@@ -20,7 +20,7 @@ func (s *MealCategoryService) Get() (categories []MealCategory, err error) {
 
 	for rows.Next() {
 		var category MealCategory
-		err = rows.Scan(&category.Id, &category.NameDe, &category.NameEn)
+		err = rows.Scan(&category.Id, &category.NameDe, &category.NameEn, &category.Location.Id)
 		if err != nil {
 			return []MealCategory{}, err
 		}
@@ -30,15 +30,15 @@ func (s *MealCategoryService) Get() (categories []MealCategory, err error) {
 	return categories, nil
 }
 
-func (s *MealCategoryService) Add(categories []MealCategory) (err error) {
-	stmt := "INSERT INTO categories (id, name_de, name_en) VALUES "
+func (s *MealCategoryDBService) Add(categories []MealCategory) (err error) {
+	stmt := "INSERT INTO categories (id, name_de, name_en, location_id) VALUES "
 	args := []any{}
 	for i, category := range categories {
 		if i != 0 {
 			stmt += ", "
 		}
-		stmt += "(?, ?, ?)"
-		args = append(args, category.Id, category.NameDe, category.NameEn)
+		stmt += "(?, ?, ?, ?)"
+		args = append(args, category.Id, category.NameDe, category.NameEn, category.Location.Id)
 	}
 
 	_, err = s.DB.Exec(stmt, args...)
