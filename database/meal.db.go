@@ -19,9 +19,9 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 			nutrition.kj, nutrition.kcal, nutrition.fat, nutrition.saturated_fat,
 			nutrition.carbohydrates, nutrition.sugar, nutrition.protein, nutrition.salt,
 			meals.co2_grams, meals.co2_rating FROM meals
-		INNER JOIN categories ON categories.id=meals.category_id
-		INNER JOIN locations ON locations.id=meals.location_id
-		INNER JOIN nutrition ON nutrition.meal_id=meals.id
+		LEFT JOIN categories ON categories.id=meals.category_id
+		LEFT JOIN locations ON locations.id=meals.location_id
+		LEFT JOIN nutrition ON nutrition.meal_id=meals.id
 		WHERE meals.location_id=? AND meals.date=?`
 	dateStr := date.Format("2006-01-02")
 	rows, err := s.DB.Query(stmt, location.Id, dateStr)
@@ -140,10 +140,13 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 	// add additives, allergens and features
 	stmt = `INSERT INTO meal_attributes (meal_id, attribute_id, attribute_type) VALUES `
 	args = []any{}
-	for i, meal := range meals {
+	firstAdd := true
+	for _, meal := range meals {
 		mealAttributes := append(meal.Additives, append(meal.Allergens, meal.Features...)...)
-		for j, mealAttribute := range mealAttributes {
-			if i+j != 0 {
+		for _, mealAttribute := range mealAttributes {
+			if firstAdd {
+				firstAdd = false
+			} else {
 				stmt += ", "
 			}
 			stmt += "(?, ?, ?)"

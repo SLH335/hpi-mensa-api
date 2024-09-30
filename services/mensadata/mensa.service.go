@@ -15,8 +15,16 @@ import (
 
 const baseUrl string = "https://swp.webspeiseplan.de/index.php"
 
-func GetMeals(location Location, language Language, date time.Time) (meals []Meal, err error) {
-	jsonData, err := getData(MenuModel, location, language)
+func GetMeals(location Location, lang Language, date time.Time) (meals []Meal, err error) {
+	if location.Id == 999 {
+		meals, err = GetCKOMeals(date, lang)
+		if err != nil {
+			return []Meal{}, err
+		}
+		return meals, nil
+	}
+
+	jsonData, err := getData(MenuModel, location, lang)
 	if err != nil {
 		return []Meal{}, err
 	}
@@ -173,7 +181,7 @@ func getData(model Model, location Location, language Language) (jsonData *fastj
 		return jsonData, err
 	}
 
-	req.Header.Add("Referer", "https://sqp.webspeiseplan.de/Menu")
+	req.Header.Add("Referer", "https://swp.webspeiseplan.de/Menu")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	res, err := client.Do(req)

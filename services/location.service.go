@@ -20,10 +20,15 @@ func (s *LocationService) Get() (locations []Location, err error) {
 		if err != nil {
 			return []Location{}, err
 		}
+		locations = append(locations, Location{
+			Id:   999,
+			Name: "Campus Kitchen One",
+		})
 		err = s.DbService.Add(locations)
 		if err != nil {
 			return []Location{}, err
 		}
 	}
+
 	return locations, nil
 }

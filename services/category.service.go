@@ -16,23 +16,32 @@ func (s *MealCategoryService) Get(location Location, lang Language) (categories 
 		return []MealCategory{}, err
 	}
 	if len(categories) == 0 {
-		categoriesDe, err := mensadata.GetMealCategories(location, German)
-		if err != nil {
-			return []MealCategory{}, err
-		}
-		categoriesEn, err := mensadata.GetMealCategories(location, English)
-		if err != nil {
-			return []MealCategory{}, err
-		}
-		for _, categoryDe := range categoriesDe {
-			for _, categoryEn := range categoriesEn {
-				if categoryDe.Id == categoryEn.Id {
-					category := categoryEn
-					category.NameDe = categoryDe.Name
-					category.NameEn = categoryEn.Name
-					category.Name = ""
-					categories = append(categories, category)
-					break
+		if location.Id == 999 {
+			categories = append(categories, MealCategory{
+				Id:       0,
+				NameDe:   "",
+				NameEn:   "",
+				Location: &Location{Id: 999},
+			})
+		} else {
+			categoriesDe, err := mensadata.GetMealCategories(location, German)
+			if err != nil {
+				return []MealCategory{}, err
+			}
+			categoriesEn, err := mensadata.GetMealCategories(location, English)
+			if err != nil {
+				return []MealCategory{}, err
+			}
+			for _, categoryDe := range categoriesDe {
+				for _, categoryEn := range categoriesEn {
+					if categoryDe.Id == categoryEn.Id {
+						category := categoryEn
+						category.NameDe = categoryDe.Name
+						category.NameEn = categoryEn.Name
+						category.Name = ""
+						categories = append(categories, category)
+						break
+					}
 				}
 			}
 		}

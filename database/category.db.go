@@ -20,6 +20,7 @@ func (s *MealCategoryDBService) Get(location Location) (categories []MealCategor
 
 	for rows.Next() {
 		var category MealCategory
+		category.Location = &Location{}
 		err = rows.Scan(&category.Id, &category.NameDe, &category.NameEn, &category.Location.Id)
 		if err != nil {
 			return []MealCategory{}, err

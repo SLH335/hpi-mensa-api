@@ -30,6 +30,7 @@ func (s *MealAttributeDBService) Get(attributeType MealAttributeType, location L
 
 	for rows.Next() {
 		var attribute MealAttribute
+		attribute.Location = &Location{}
 		err = rows.Scan(&attribute.Id, &attribute.Type, &attribute.Short, &attribute.NameDe, &attribute.NameEn, &attribute.Location.Id)
 		if err != nil {
 			return []MealAttribute{}, err
