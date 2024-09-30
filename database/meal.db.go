@@ -17,7 +17,8 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 	stmt := `SELECT meals.id, meals.name_de, meals.name_en, meals.price_student, meals.price_guest,
 			categories.id, categories.name_de, categories.name_en, locations.id, locations.name,
 			nutrition.kj, nutrition.kcal, nutrition.fat, nutrition.saturated_fat,
-			nutrition.carbohydrates, nutrition.sugar, nutrition.protein, nutrition.salt FROM meals
+			nutrition.carbohydrates, nutrition.sugar, nutrition.protein, nutrition.salt,
+			meals.co2_grams, meals.co2_rating FROM meals
 		INNER JOIN categories ON categories.id=meals.category_id
 		INNER JOIN locations ON locations.id=meals.location_id
 		INNER JOIN nutrition ON nutrition.meal_id=meals.id
@@ -36,7 +37,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 			&meal.Category.Id, &meal.Category.NameDe, &meal.Category.NameEn, &meal.Location.Id,
 			&meal.Location.Name, &meal.Nutrition.Kj, &meal.Nutrition.Kcal, &meal.Nutrition.Fat,
 			&meal.Nutrition.SaturatedFat, &meal.Nutrition.Carbohydrates, &meal.Nutrition.Sugar,
-			&meal.Nutrition.Protein, &meal.Nutrition.Salt,
+			&meal.Nutrition.Protein, &meal.Nutrition.Salt, &meal.CO2.Grams, &meal.CO2.Rating,
 		)
 		if err != nil {
 			return []Meal{}, err
@@ -101,16 +102,17 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 	}
 
 	// add basic meal data
-	stmt := `INSERT INTO meals (id, name_de, name_en, category_id, price_student, price_guest, date,
-		location_id) VALUES `
+	stmt := `INSERT INTO meals (id, name_de, name_en, category_id, price_student, price_guest,
+		co2_grams, co2_rating, date, location_id) VALUES `
 	args := []any{}
 	for i, meal := range meals {
 		if i != 0 {
 			stmt += ", "
 		}
-		stmt += "(?, ?, ?, ?, ?, ?, ?, ?)"
+		stmt += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		args = append(args, meal.Id, meal.NameDe, meal.NameEn, meal.Category.Id, meal.StudentPrice,
-			meal.GuestPrice, meal.Date.Format("2006-01-02"), meal.Location.Id)
+			meal.GuestPrice, meal.CO2.Grams, meal.CO2.Rating, meal.Date.Format("2006-01-02"),
+			meal.Location.Id)
 	}
 	_, err = s.DB.Exec(stmt, args...)
 	if err != nil {

@@ -51,6 +51,8 @@ func GetMeals(location Location, language Language, date time.Time) (meals []Mea
 			meal.Nutrition.Sugar = mealData.GetFloat64("zusatzinformationen", "nwzuckerDecimal1")
 			meal.Nutrition.Protein = mealData.GetFloat64("zusatzinformationen", "nweiweissDecimal1")
 			meal.Nutrition.Salt = mealData.GetFloat64("zusatzinformationen", "nwsalzDecimal1")
+			meal.CO2.Grams = mealData.GetInt("zusatzinformationen", "sustainability", "co2", "co2Value")
+			meal.CO2.Rating = string(mealData.GetStringBytes("zusatzinformationen", "sustainability", "co2", "co2RatingIdentifier"))
 
 			additiveIds := strings.Split(string(mealData.GetStringBytes("zusatzstoffeIds")), ",")
 			for _, additiveIdStr := range additiveIds {

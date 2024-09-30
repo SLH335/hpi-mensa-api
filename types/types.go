@@ -53,75 +53,6 @@ func (category MealCategory) Translated(language Language) (translated MealCateg
 	return translated
 }
 
-var UnknownOffer MealCategory = MealCategory{
-	Id:     0,
-	NameDe: "Unbekanntes Angebot",
-	NameEn: "Unknown Offer",
-}
-var Offer1 MealCategory = MealCategory{
-	Id:     149,
-	NameDe: "Angebot 1",
-	NameEn: "Offer 1",
-}
-var Offer2 MealCategory = MealCategory{
-	Id:     150,
-	NameDe: "Angebot 2",
-	NameEn: "Offer 2",
-}
-var Offer3 MealCategory = MealCategory{
-	Id:     151,
-	NameDe: "Angebot 3",
-	NameEn: "Offer 3",
-}
-var Offer4 MealCategory = MealCategory{
-	Id:     152,
-	NameDe: "Angebot 4",
-	NameEn: "Offer 4",
-}
-var DailySpecial MealCategory = MealCategory{
-	Id:     118,
-	NameDe: "Tagesangebot",
-	NameEn: "Daily Special",
-}
-var SaladBar MealCategory = MealCategory{
-	Id:     112,
-	NameDe: "Salattheke",
-	NameEn: "Salad bar",
-}
-var Dessert1 MealCategory = MealCategory{
-	Id:     119,
-	NameDe: "Dessert 1",
-	NameEn: "Dessert 1",
-}
-var Dessert2 MealCategory = MealCategory{
-	Id:     120,
-	NameDe: "Dessert 1",
-	NameEn: "Dessert 2",
-}
-
-func GetMealCategoryFromId(id int) MealCategory {
-	switch id {
-	case Offer1.Id:
-		return Offer1
-	case Offer2.Id:
-		return Offer2
-	case Offer3.Id:
-		return Offer3
-	case Offer4.Id:
-		return Offer4
-	case DailySpecial.Id:
-		return DailySpecial
-	case SaladBar.Id:
-		return SaladBar
-	case Dessert1.Id:
-		return Dessert1
-	case Dessert2.Id:
-		return Dessert2
-	default:
-		return UnknownOffer
-	}
-}
-
 type Meal struct {
 	Id           int             `json:"id"`
 	Name         string          `json:"name"`
@@ -135,7 +66,13 @@ type Meal struct {
 	Additives    []MealAttribute `json:"additives"`
 	Allergens    []MealAttribute `json:"allergens"`
 	Features     []MealAttribute `json:"features"`
+	CO2          MealCO2         `json:"co2"`
 	Location     Location        `json:"location"`
+}
+
+type MealCO2 struct {
+	Grams  int    `json:"grams"`
+	Rating string `json:"rating"`
 }
 
 func (meal Meal) Translated(language Language) (translated Meal) {
