@@ -133,6 +133,7 @@ func (attribute MealAttribute) Translated(language Language) (translated MealAtt
 	translated.NameDe = ""
 	translated.NameEn = ""
 	translated.Type = ""
+	translated.Location = nil
 	return translated
 }
 
