@@ -47,11 +47,12 @@ func main() {
 
 	e := echo.New()
 
-	e.GET("/locations", server.GetLocations)
-	e.GET("/additives/:location", server.GetAdditives)
-	e.GET("/allergens/:location", server.GetAllergens)
-	e.GET("/features/:location", server.GetFeatures)
-	e.GET("/meals/:location", server.GetMeals)
+	api := e.Group("/api/v1")
+	api.GET("/locations", server.GetLocations)
+	api.GET("/additives/:location", server.GetAdditives)
+	api.GET("/allergens/:location", server.GetAllergens)
+	api.GET("/features/:location", server.GetFeatures)
+	api.GET("/meals/:location", server.GetMeals)
 
 	e.Logger.Fatal(e.Start(":3000"))
 }
