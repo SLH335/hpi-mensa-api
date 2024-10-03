@@ -43,6 +43,7 @@ func (server *Server) getAttributes(c echo.Context, attributeType MealAttributeT
 
 	attributes, err := server.MealService.AttributeService.Get(attributeType, location, lang)
 	if err != nil {
+		fmt.Printf("Error: %+v\n", err)
 		return c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
 			Message: fmt.Sprintf("failed to load %ss", attributeType),

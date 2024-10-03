@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/cockroachdb/errors"
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
@@ -15,7 +16,7 @@ func (s *LocationDBService) Get() (locations []Location, err error) {
 	stmt := "SELECT * FROM locations"
 	rows, err := s.DB.Query(stmt)
 	if err != nil {
-		return []Location{}, err
+		return []Location{}, errors.Wrap(err, "location db get")
 	}
 	defer rows.Close()
 
@@ -23,7 +24,7 @@ func (s *LocationDBService) Get() (locations []Location, err error) {
 		var location Location
 		err = rows.Scan(&location.Id, &location.Name)
 		if err != nil {
-			return []Location{}, err
+			return []Location{}, errors.Wrap(err, "location db get")
 		}
 		locations = append(locations, location)
 	}
@@ -47,5 +48,5 @@ func (s *LocationDBService) Add(locations []Location) (err error) {
 	}
 
 	_, err = s.DB.Exec(stmt, args...)
-	return err
+	return errors.Wrap(err, "location db add")
 }

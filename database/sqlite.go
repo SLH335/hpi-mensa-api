@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	"github.com/cockroachdb/errors"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -22,7 +23,7 @@ func CreateTables(db *sql.DB) (err error) {
 		PRIMARY KEY("id","type","location_id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "categories" (
@@ -33,7 +34,7 @@ func CreateTables(db *sql.DB) (err error) {
 		PRIMARY KEY("id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "locations" (
@@ -42,7 +43,7 @@ func CreateTables(db *sql.DB) (err error) {
 		PRIMARY KEY("id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "meal_attributes" (
@@ -52,7 +53,7 @@ func CreateTables(db *sql.DB) (err error) {
 		PRIMARY KEY("meal_id","attribute_id","attribute_type")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "meals" (
@@ -71,7 +72,7 @@ func CreateTables(db *sql.DB) (err error) {
 		FOREIGN KEY("category_id") REFERENCES "categories"("id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
 	stmt = `CREATE TABLE IF NOT EXISTS "nutrition" (
@@ -87,8 +88,8 @@ func CreateTables(db *sql.DB) (err error) {
 		FOREIGN KEY("meal_id") REFERENCES "meals"("id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
-		return err
+		return errors.Wrap(err, "db create tables")
 	}
 
-	return err
+	return nil
 }

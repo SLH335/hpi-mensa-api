@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -40,6 +41,7 @@ func (server *Server) GetMeals(c echo.Context) error {
 
 	meals, err := server.MealService.Get(location, lang, date)
 	if err != nil {
+		fmt.Printf("Error: %+v\n", err)
 		return c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
 			Message: "failed to load meals",

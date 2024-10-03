@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 
+	"github.com/cockroachdb/errors"
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
@@ -14,7 +15,7 @@ func (s *MealCategoryDBService) Get(location Location) (categories []MealCategor
 	stmt := "SELECT * FROM categories WHERE categories.location_id=?"
 	rows, err := s.DB.Query(stmt, location.Id)
 	if err != nil {
-		return []MealCategory{}, err
+		return []MealCategory{}, errors.Wrap(err, "meal category db get")
 	}
 	defer rows.Close()
 
@@ -23,7 +24,7 @@ func (s *MealCategoryDBService) Get(location Location) (categories []MealCategor
 		category.Location = &Location{}
 		err = rows.Scan(&category.Id, &category.NameDe, &category.NameEn, &category.Location.Id)
 		if err != nil {
-			return []MealCategory{}, err
+			return []MealCategory{}, errors.Wrap(err, "meal category db get")
 		}
 		categories = append(categories, category)
 	}
@@ -43,5 +44,5 @@ func (s *MealCategoryDBService) Add(categories []MealCategory) (err error) {
 	}
 
 	_, err = s.DB.Exec(stmt, args...)
-	return err
+	return errors.Wrap(err, "meal category db add")
 }

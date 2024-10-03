@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	"github.com/valyala/fastjson"
 
 	. "github.com/slh335/hpi-mensa-api/types"
@@ -39,7 +40,7 @@ func GetMeals(location Location, lang Language, date time.Time) (meals []Meal, e
 
 			meal.Date, err = time.Parse(time.RFC3339, string(mealData.GetStringBytes("speiseplanAdvancedGericht", "datum")))
 			if err != nil {
-				return meals, err
+				return meals, errors.Wrap(err, "mensadata meals")
 			}
 			if meal.Date.Format("2006-01-02") != date.Format("2006-01-02") {
 				continue
@@ -178,7 +179,7 @@ func getData(model Model, location Location, language Language) (jsonData *fastj
 
 	req, err := http.NewRequest(http.MethodGet, baseUrl+"?"+params.Encode(), nil)
 	if err != nil {
-		return jsonData, err
+		return jsonData, errors.Wrap(err, "mensadata get")
 	}
 
 	req.Header.Add("Referer", "https://swp.webspeiseplan.de/Menu")
@@ -186,19 +187,19 @@ func getData(model Model, location Location, language Language) (jsonData *fastj
 	client := &http.Client{Timeout: 10 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
-		return jsonData, err
+		return jsonData, errors.Wrap(err, "mensadata get")
 	}
 	defer res.Body.Close()
 
 	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return jsonData, err
+		return jsonData, errors.Wrap(err, "mensadata get")
 	}
 
 	var parser fastjson.Parser
 	jsonData, err = parser.Parse(string(resBody))
 	if err != nil {
-		return jsonData, err
+		return jsonData, errors.Wrap(err, "mensadata get")
 	}
 
 	return jsonData.Get("content"), nil

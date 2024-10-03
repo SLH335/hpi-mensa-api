@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 func (server *Server) Index(c echo.Context) error {
 	meals, err := server.MealService.Get(Location{Id: 9601}, German, time.Now())
 	if err != nil {
+		fmt.Printf("Error: %+v\n", err)
 		return c.JSON(http.StatusInternalServerError, Response{
 			Success: false,
 			Message: "failed to load meals",

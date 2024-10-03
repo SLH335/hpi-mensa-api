@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/cockroachdb/errors"
 
 	. "github.com/slh335/hpi-mensa-api/types"
 )
@@ -27,14 +28,14 @@ func getCKOData(lang Language) (doc *goquery.Document, err error) {
 	}
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return doc, err
+		return doc, errors.Wrap(err, "campus kitchen one")
 	}
 	req.Header.Add("User-Agent", "HPI-Mensa-API v0.1.0")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
-		return doc, err
+		return doc, errors.Wrap(err, "campus kitchen one")
 	}
 	defer res.Body.Close()
 
@@ -60,7 +61,7 @@ func GetCKOMeals(date time.Time, lang Language) (meals []Meal, err error) {
 		meals, err = getCKOMealsEnglish(doc)
 	}
 	if err != nil {
-		return []Meal{}, err
+		return []Meal{}, errors.Wrap(err, "campus kitchen one")
 	}
 
 	meals = slices.DeleteFunc(meals, func(meal Meal) bool {

@@ -2,9 +2,9 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
+	"github.com/cockroachdb/errors"
 	. "github.com/slh335/hpi-mensa-api/types"
 )
 
@@ -26,7 +26,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 	dateStr := date.Format("2006-01-02")
 	rows, err := s.DB.Query(stmt, location.Id, dateStr)
 	if err != nil {
-		return []Meal{}, err
+		return []Meal{}, errors.Wrap(err, "meal db get")
 	}
 	defer rows.Close()
 
@@ -40,7 +40,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 			&meal.Nutrition.Protein, &meal.Nutrition.Salt, &meal.CO2.Grams, &meal.CO2.Rating,
 		)
 		if err != nil {
-			return []Meal{}, err
+			return []Meal{}, errors.Wrap(err, "meal db get")
 		}
 		meal.Date, _ = time.Parse("2006-01-02", dateStr)
 		meals = append(meals, meal)
@@ -65,7 +65,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 
 	rows, err = s.DB.Query(stmt, args...)
 	if err != nil {
-		return []Meal{}, err
+		return []Meal{}, errors.Wrap(err, "meal db get")
 	}
 	defer rows.Close()
 
@@ -76,7 +76,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 		err = rows.Scan(&mealId, &attribute.Id, &attribute.Type, &attribute.Short,
 			&attribute.NameDe, &attribute.NameEn, &attribute.Location.Id)
 		if err != nil {
-			return []Meal{}, err
+			return []Meal{}, errors.Wrap(err, "meal db get")
 		}
 		for i := range meals {
 			if meals[i].Id == mealId {
@@ -98,7 +98,7 @@ func (s *MealDBService) Get(location Location, date time.Time) (meals []Meal, er
 
 func (s *MealDBService) Add(meals []Meal) (err error) {
 	if len(meals) == 0 {
-		return fmt.Errorf("error: no meals were provided")
+		return errors.New("no meals were provided")
 	}
 
 	// add basic meal data
@@ -116,7 +116,7 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 	}
 	_, err = s.DB.Exec(stmt, args...)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "meal db add")
 	}
 
 	// add nutrition information
@@ -136,7 +136,7 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 		_, err = s.DB.Exec(stmt, args...)
 	}
 	if err != nil {
-		return err
+		return errors.Wrap(err, "meal db add")
 	}
 
 	// add additives, allergens and features
@@ -159,7 +159,7 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 		_, err = s.DB.Exec(stmt, args...)
 	}
 	if err != nil {
-		return err
+		return errors.Wrap(err, "meal db add")
 	}
 
 	return err
