@@ -8,7 +8,12 @@ import (
 templ mainIndex(meals []Meal) {
 	<div class="flex">
 		for _, weekday := range getCurrentWeekDays() {
-			<div class="mx-8 my-4 flex-auto text-center">
+			<div
+				class="mx-2 my-4 flex-auto text-center"
+				hx-get={ "/api/v1/meals/golm?format=html&date=" + weekday.Format("2006-01-02") }
+				hx-target="#meals"
+				hx-swap="outerHTML"
+			>
 				<div>
 					{ weekday.Format("Mon") }
 				</div>

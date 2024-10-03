@@ -7,15 +7,17 @@ import (
 )
 
 templ Meals(meals []Meal) {
-	for _, meal := range meals {
-		<div class="m-2 rounded-xl bg-slate-200 p-2">
-			<span>{ meal.Name }</span>
-			<br/>
-			<span>{ formatPrice(meal.StudentPrice) }</span>
-			<span>{ formatPrice(meal.GuestPrice) }</span>
-			<span>{ formatAttributes(meal) }</span>
-		</div>
-	}
+	<div id="meals">
+		for _, meal := range meals {
+			<div class="m-2 rounded-xl bg-slate-200 p-2">
+				<span>{ meal.Name }</span>
+				<br/>
+				<span>{ formatPrice(meal.StudentPrice) }</span>
+				<span>{ formatPrice(meal.GuestPrice) }</span>
+				<span>{ formatAttributes(meal) }</span>
+			</div>
+		}
+	</div>
 }
 
 func formatPrice(price float64) string {
