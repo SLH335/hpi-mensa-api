@@ -50,7 +50,7 @@ func (server *Server) parseDate(c echo.Context, dateStr string) (ok bool, err er
 	}
 	date, err = time.Parse("2006-01-02", dateStr)
 	if err != nil {
-		return false, c.JSON(http.StatusInternalServerError, Response{
+		return false, c.JSON(http.StatusBadRequest, Response{
 			Success: false,
 			Message: fmt.Sprintf("invalid date: %s", dateStr),
 		}), time.Time{}
@@ -59,18 +59,29 @@ func (server *Server) parseDate(c echo.Context, dateStr string) (ok bool, err er
 }
 
 func (server *Server) parseLanguage(c echo.Context, langStr string) (ok bool, err error, lang Language) {
-	if strings.TrimSpace(langStr) == "" {
-		return true, nil, English
-	}
 	switch strings.TrimSpace(langStr) {
+	case "", "en":
+		return true, nil, English
 	case "de":
 		return true, nil, German
-	case "en":
-		return true, nil, English
 	}
 
-	return false, c.JSON(http.StatusInternalServerError, Response{
+	return false, c.JSON(http.StatusBadRequest, Response{
 		Success: false,
 		Message: fmt.Sprintf("invalid language: %s", langStr),
 	}), English
+}
+
+func (server *Server) parseFormat(c echo.Context, formatStr string) (ok bool, err error, format Format) {
+	switch strings.TrimSpace(formatStr) {
+	case "", "json":
+		return true, nil, FormatJSON
+	case "html":
+		return true, nil, FormatHTML
+	}
+
+	return false, c.JSON(http.StatusBadRequest, Response{
+		Success: false,
+		Message: fmt.Sprintf("invalid format: %s", formatStr),
+	}), FormatJSON
 }

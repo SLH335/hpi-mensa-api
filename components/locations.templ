@@ -1,0 +1,9 @@
+package components
+
+import . "github.com/slh335/hpi-mensa-api/types"
+
+templ Locations(locations []Location) {
+	for _, location := range locations {
+		<p>{ location.Name }</p>
+	}
+}

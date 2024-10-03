@@ -2,6 +2,13 @@ package types
 
 import "time"
 
+type Format string
+
+const (
+	FormatJSON Format = "json"
+	FormatHTML Format = "html"
+)
+
 type Response struct {
 	Success bool   `json:"success"`
 	Message string `json:"message,omitempty"`

@@ -1,0 +1,42 @@
+package components
+
+import (
+	"fmt"
+	. "github.com/slh335/hpi-mensa-api/types"
+	"strings"
+)
+
+templ Meals(meals []Meal) {
+	@Layout(mainMeals(meals))
+}
+
+templ mainMeals(meals []Meal) {
+	for _, meal := range meals {
+		<div class="m-2 rounded-xl bg-slate-200 p-2">
+			<span>{ meal.Name }</span>
+			<br/>
+			<span>{ formatPrice(meal.StudentPrice) }</span>
+			<span>{ formatPrice(meal.GuestPrice) }</span>
+			<span>{ formatAttributes(meal) }</span>
+		</div>
+	}
+}
+
+func formatPrice(price float64) string {
+	return fmt.Sprintf("%.2f€", price)
+}
+
+func formatAttributes(meal Meal) string {
+	allAttributesStr := []string{}
+	for _, attributes := range [][]MealAttribute{meal.Features, meal.Allergens, meal.Additives} {
+		attributesStr := []string{}
+		for _, attribute := range attributes {
+			attributesStr = append(attributesStr, attribute.Short)
+		}
+		attributesFormatted := strings.Join(attributesStr, ", ")
+		if strings.TrimSpace(attributesFormatted) != "" {
+			allAttributesStr = append(allAttributesStr, strings.Join(attributesStr, ", "))
+		}
+	}
+	return strings.Join(allAttributesStr, " • ")
+}
