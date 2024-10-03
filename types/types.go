@@ -20,11 +20,20 @@ type Location struct {
 	Name string `json:"name"`
 }
 
-type Language int
+type Language struct {
+	Id    int
+	Short string
+}
 
-const (
-	German  Language = 1
-	English Language = 2
+var (
+	German Language = Language{
+		Id:    1,
+		Short: "de",
+	}
+	English Language = Language{
+		Id:    2,
+		Short: "en",
+	}
 )
 
 type Model string

@@ -50,6 +50,8 @@ func main() {
 	e.Static("/static", "static")
 
 	e.GET("/", server.Index)
+	e.GET("/de", server.Index)
+	e.GET("/en", server.Index)
 
 	api := e.Group("/api/v1")
 	api.GET("/locations", server.GetLocations)

@@ -140,7 +140,7 @@ func GetMealAttributes(attributeType MealAttributeType, location Location, langu
 }
 
 func GetLocations() (locations []Location, err error) {
-	jsonData, err := getData(LocationsModel, Location{}, Language(0))
+	jsonData, err := getData(LocationsModel, Location{}, Language{})
 	if err != nil {
 		return []Location{}, err
 	}
@@ -175,7 +175,7 @@ func getData(model Model, location Location, language Language) (jsonData *fastj
 	params.Add("token", "55ed21609e26bbf68ba2b19390bf7961")
 	params.Add("model", string(model))
 	params.Add("location", strconv.Itoa(location.Id))
-	params.Add("languagetype", strconv.Itoa(int((language))))
+	params.Add("languagetype", strconv.Itoa(language.Id))
 
 	req, err := http.NewRequest(http.MethodGet, baseUrl+"?"+params.Encode(), nil)
 	if err != nil {

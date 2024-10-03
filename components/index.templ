@@ -5,17 +5,17 @@ import (
 	"time"
 )
 
-templ mainIndex(meals []Meal) {
+templ mainIndex(lang Language, meals []Meal) {
 	<div class="flex">
 		for _, weekday := range getCurrentWeekDays() {
 			<div
 				class="mx-2 my-4 flex-auto text-center"
-				hx-get={ "/api/v1/meals/golm?format=html&date=" + weekday.Format("2006-01-02") }
+				hx-get={ "/api/v1/meals/griebnitzsee?format=html&lang=" + lang.Short + "&date=" + weekday.Format("2006-01-02") }
 				hx-target="#meals"
 				hx-swap="outerHTML"
 			>
 				<div>
-					{ weekday.Format("Mon") }
+					{ translateWeekday(weekday, lang) }
 				</div>
 				<div class="rounded-full bg-red-300 p-2">
 					{ weekday.Format("2") }
@@ -26,8 +26,8 @@ templ mainIndex(meals []Meal) {
 	@Meals(meals)
 }
 
-templ Index(meals []Meal) {
-	@Layout(mainIndex(meals))
+templ Index(lang Language, meals []Meal) {
+	@Layout(mainIndex(lang, meals))
 }
 
 templ dateSelector() {
@@ -40,4 +40,12 @@ func getCurrentWeekDays() (weekdays []time.Time) {
 		weekdays = append(weekdays, monday.Add(time.Duration(i)*24*time.Hour))
 	}
 	return weekdays
+}
+
+func translateWeekday(weekday time.Time, lang Language) string {
+	if lang == German {
+		weekdays := []string{"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"}
+		return weekdays[weekday.Weekday()]
+	}
+	return weekday.Format("Mon")
 }
