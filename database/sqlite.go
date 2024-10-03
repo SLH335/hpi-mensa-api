@@ -19,7 +19,7 @@ func CreateTables(db *sql.DB) (err error) {
 		"name_de"     TEXT NOT NULL,
 		"name_en"     TEXT NOT NULL,
 		"location_id" INTEGER NOT NULL,
-		PRIMARY KEY("id","type")
+		PRIMARY KEY("id","type","location_id")
 	)`
 	if _, err = db.Exec(stmt); err != nil {
 		return err

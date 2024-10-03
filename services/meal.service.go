@@ -30,9 +30,18 @@ func (s *MealService) Get(location Location, lang Language, date time.Time) (mea
 
 		// ensure category and attribute data is present in database
 		s.CategoryService.Get(location, lang)
-		s.AttributeService.Get(AdditiveAttribute, location, lang)
-		s.AttributeService.Get(AllergenAttribute, location, lang)
-		s.AttributeService.Get(FeatureAttribute, location, lang)
+		_, err = s.AttributeService.Get(AdditiveAttribute, location, lang)
+		if err != nil {
+			return []Meal{}, err
+		}
+		_, err = s.AttributeService.Get(AllergenAttribute, location, lang)
+		if err != nil {
+			return []Meal{}, err
+		}
+		_, err = s.AttributeService.Get(FeatureAttribute, location, lang)
+		if err != nil {
+			return []Meal{}, err
+		}
 
 		err = s.DbService.Add(meals)
 		if err != nil {

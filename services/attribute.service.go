@@ -39,9 +39,11 @@ func (s *MealAttributeService) Get(
 				}
 			}
 		}
-		for _, attribute := range mensadata.GetCKOAttributes() {
-			if attribute.Type == attributeType {
-				attributes = append(attributes, attribute)
+		if location.Id == 999 {
+			for _, attribute := range mensadata.GetCKOAttributes() {
+				if attribute.Type == attributeType {
+					attributes = append(attributes, attribute)
+				}
 			}
 		}
 		err = s.DbService.Add(attributes)
