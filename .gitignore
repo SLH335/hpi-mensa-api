@@ -1,5 +1,13 @@
 # Output dir
 tmp/
 
+# Tailwind CSS
+node_modules/
+package-lock.json
+static/css/tailwind.css
+
+# Generated Templ files
+*_templ.go
+
 # Database
 *.db

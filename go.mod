@@ -6,6 +6,7 @@ require github.com/valyala/fastjson v1.6.4
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.0
+	github.com/a-h/templ v0.2.778
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mattn/go-sqlite3 v1.14.23
 )

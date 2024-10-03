@@ -47,6 +47,10 @@ func main() {
 
 	e := echo.New()
 
+	e.Static("/static", "static")
+
+	e.GET("/", server.Index)
+
 	api := e.Group("/api/v1")
 	api.GET("/locations", server.GetLocations)
 	api.GET("/additives/:location", server.GetAdditives)
