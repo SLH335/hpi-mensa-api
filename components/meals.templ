@@ -7,10 +7,6 @@ import (
 )
 
 templ Meals(meals []Meal) {
-	@Layout(mainMeals(meals))
-}
-
-templ mainMeals(meals []Meal) {
 	for _, meal := range meals {
 		<div class="m-2 rounded-xl bg-slate-200 p-2">
 			<span>{ meal.Name }</span>

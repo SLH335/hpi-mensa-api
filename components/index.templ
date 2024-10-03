@@ -1,9 +1,38 @@
 package components
 
-templ mainIndex() {
-	<p>Hello World!</p>
+import (
+	. "github.com/slh335/hpi-mensa-api/types"
+	"time"
+)
+
+templ mainIndex(meals []Meal) {
+	<div class="flex">
+		for _, weekday := range getCurrentWeekDays() {
+			<div class="mx-8 my-4 flex-auto text-center">
+				<div>
+					{ weekday.Format("Mon") }
+				</div>
+				<div class="rounded-full bg-red-300 p-2">
+					{ weekday.Format("2") }
+				</div>
+			</div>
+		}
+	</div>
+	@Meals(meals)
 }
 
-templ Index() {
-	@Layout(mainIndex())
+templ Index(meals []Meal) {
+	@Layout(mainIndex(meals))
+}
+
+templ dateSelector() {
+}
+
+func getCurrentWeekDays() (weekdays []time.Time) {
+	now := time.Now()
+	monday := time.Now().Add(-24 * time.Hour * time.Duration(now.Weekday()-1))
+	for i := 0; i < 7; i++ {
+		weekdays = append(weekdays, monday.Add(time.Duration(i)*24*time.Hour))
+	}
+	return weekdays
 }
