@@ -132,7 +132,9 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 			meal.Nutrition.SaturatedFat, meal.Nutrition.Carbohydrates, meal.Nutrition.Sugar,
 			meal.Nutrition.Protein, meal.Nutrition.Salt)
 	}
-	_, err = s.DB.Exec(stmt, args...)
+	if len(args) > 0 {
+		_, err = s.DB.Exec(stmt, args...)
+	}
 	if err != nil {
 		return err
 	}
@@ -153,7 +155,9 @@ func (s *MealDBService) Add(meals []Meal) (err error) {
 			args = append(args, meal.Id, mealAttribute.Id, mealAttribute.Type)
 		}
 	}
-	_, err = s.DB.Exec(stmt, args...)
+	if len(args) > 0 {
+		_, err = s.DB.Exec(stmt, args...)
+	}
 	if err != nil {
 		return err
 	}
