@@ -108,15 +108,19 @@ func getCKOMealsGerman(doc *goquery.Document) (meals []Meal, err error) {
 				currentDate, err = time.Parse("02.01.2006", dateStr)
 			}
 		} else {
-			s.Find("p > span").Each(func(j int, mealS *goquery.Selection) {
-				name := strings.TrimSpace(mealS.Text())
+			j := 0
+			s.Find("p > span").Each(func(_ int, mealS *goquery.Selection) {
+				name := strings.Join(strings.Fields(mealS.Text()), " ")
 				if slices.Contains([]string{"", "-", "Geschlossen"}, name) {
 					return
 				}
 				attributes, name := parseCKOAttributes(name)
+				if name == "" {
+					return
+				}
 
 				var meal Meal
-				meal.NameDe = strings.Join(strings.Fields(name), " ")
+				meal.NameDe = name
 				dateInt, err := strconv.Atoi(currentDate.Format("20060102"))
 				if err != nil {
 					return
@@ -139,6 +143,7 @@ func getCKOMealsGerman(doc *goquery.Document) (meals []Meal, err error) {
 					}
 				}
 				meals = append(meals, meal)
+				j++
 			})
 		}
 	})
@@ -229,13 +234,17 @@ func getCKOMealsEnglish(doc *goquery.Document) (meals []Meal, err error) {
 func parseCKOAttributes(meal string) (attributes []string, name string) {
 	name = strings.Join(strings.Fields(meal), " ")
 	// parse vegan and veggie attributes separately, as they are longer than the others
-	if strings.Contains(name, "vegan") {
+	if strings.Contains(strings.ToLower(name), "vegan") {
 		attributes = append(attributes, "Vegan")
-		name = strings.TrimSpace(strings.ReplaceAll(name, "vegan", ""))
+		if strings.HasSuffix(strings.ToLower(name), "vegan") {
+			name = strings.TrimSpace(strings.ReplaceAll(name, "vegan", ""))
+		}
 	}
-	if strings.Contains(name, "veggie") {
+	if strings.Contains(strings.ToLower(name), "veggie") {
 		attributes = append(attributes, "Veggie")
-		name = strings.TrimSpace(strings.ReplaceAll(name, "veggie", ""))
+		if strings.HasSuffix(strings.ToLower(name), "veggie") {
+			name = strings.TrimSpace(strings.ReplaceAll(name, "veggie", ""))
+		}
 	}
 	// regex to handle the inconsistent attribute formatting
 	attributePattern := regexp.MustCompile(" (\\(?([A-Z]|[0-9]{1,2})\\)?(,?|, ))*$")
@@ -250,7 +259,7 @@ func parseCKOAttributes(meal string) (attributes []string, name string) {
 	// remove attributes from meal name
 	name = strings.Replace(name, attributeStr, "", 1)
 	attributes = append(attributes, strings.Split(strings.TrimSpace(attributeStr), ",")...)
-	return attributes, name
+	return attributes, strings.TrimSpace(name)
 }
 
 func parsePrice(priceStr string) (price float64, err error) {
