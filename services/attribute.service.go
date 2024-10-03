@@ -1,6 +1,8 @@
 package services
 
 import (
+	"slices"
+
 	"github.com/slh335/hpi-mensa-api/database"
 	"github.com/slh335/hpi-mensa-api/services/mensadata"
 	. "github.com/slh335/hpi-mensa-api/types"
@@ -30,6 +32,11 @@ func (s *MealAttributeService) Get(
 			return []MealAttribute{}, err
 		}
 		for _, attributeDe := range attributesDe {
+			// filter out empty attributes like 'no allergen'
+			noAttribute := []string{"", " ", "NON", "X99", "Additives"}
+			if slices.Contains(noAttribute, attributeDe.Short) {
+				continue
+			}
 			for _, attributeEn := range attributesEn {
 				if attributeDe.Id == attributeEn.Id {
 					attribute := attributeEn
