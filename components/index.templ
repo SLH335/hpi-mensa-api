@@ -2,35 +2,56 @@ package components
 
 import (
 	. "github.com/slh335/hpi-mensa-api/types"
+	"strings"
 	"time"
 )
 
-templ mainIndex(lang Language, meals []Meal) {
+templ mainIndex(lang Language, date time.Time, meals []Meal, location Location, locations []Location) {
+	@LocationSelector(location, locations, lang, date)
+	@MealsWithDateSelector(lang, date, meals, location)
+}
+
+templ Index(lang Language, date time.Time, meals []Meal, location Location, locations []Location) {
+	@Layout(mainIndex(lang, date, meals, location, locations))
+}
+
+templ MealsWithDateSelector(lang Language, date time.Time, meals []Meal, location Location) {
+	<div id="main-content">
+		@dateSelector(lang, date, location)
+		@Meals(meals)
+	</div>
+}
+
+templ dateSelector(lang Language, date time.Time, location Location) {
 	<div class="flex">
 		for _, weekday := range getCurrentWeekDays() {
 			<div
-				class="mx-2 my-4 flex-auto text-center"
-				hx-get={ "/api/v1/meals/griebnitzsee?format=html&lang=" + lang.Short + "&date=" + weekday.Format("2006-01-02") }
-				hx-target="#meals"
+				class="mx-2 my-4 flex-auto cursor-pointer text-center"
+				hx-get={ "/api/v1/meals/" + strings.ToLower(location.Name) + "?format=html&lang=" + lang.Short + "&date=" + weekday.Format("2006-01-02") }
+				hx-target="#main-content"
 				hx-swap="outerHTML"
 			>
-				<div>
-					{ translateWeekday(weekday, lang) }
-				</div>
-				<div class="rounded-full bg-red-300 p-2">
-					{ weekday.Format("2") }
-				</div>
+				if weekday.Format("20060102") == time.Now().Format("20060102") {
+					<div class="text-amber-700">
+						{ translateWeekday(weekday, lang) }
+					</div>
+				} else {
+					<div>
+						{ translateWeekday(weekday, lang) }
+					</div>
+				}
+				if weekday.Format("20060102") == date.Format("20060102") {
+					<div class="rounded-full bg-orange-400 p-2">
+						{ weekday.Format("2") }
+					</div>
+				} else {
+					<div class="rounded-full p-2">
+						{ weekday.Format("2") }
+					</div>
+				}
 			</div>
 		}
 	</div>
-	@Meals(meals)
-}
-
-templ Index(lang Language, meals []Meal) {
-	@Layout(mainIndex(lang, meals))
-}
-
-templ dateSelector() {
 }
 
 func getCurrentWeekDays() (weekdays []time.Time) {

@@ -1,9 +1,47 @@
 package components
 
-import . "github.com/slh335/hpi-mensa-api/types"
+import (
+	. "github.com/slh335/hpi-mensa-api/types"
+	"strings"
+	"time"
+)
 
-templ Locations(locations []Location) {
-	for _, location := range locations {
-		<p>{ location.Name }</p>
-	}
+templ LocationSelector(currentLocation Location, locations []Location, lang Language, date time.Time) {
+	<p class="whitespace-nowrap pb-2 pt-4 text-center text-2xl font-bold">
+		<button onclick="showLocations()" id="location-title">
+			{ currentLocation.Name }
+		</button>
+	</p>
+	<div id="location-selection" class="absolute left-1/2 hidden -translate-x-1/2 rounded-lg bg-orange-100 px-4 py-2 text-center text-xl">
+		for _, location := range locations {
+			<p
+				class="location-entry cursor-pointer py-2"
+				location={ location.Name }
+				onclick="switchLocation(this.getAttribute('location'))"
+				hx-get={ "/api/v1/meals/" + strings.ToLower(location.Name) + "?format=html&lang=" + lang.Short + "&date=" + date.Format("2006-01-02") }
+				hx-target="#main-content"
+				hx-swap="outerHTML"
+			>
+				{ location.Name }
+			</p>
+		}
+	</div>
+	<script>
+		function showLocations() {
+			locationSelection = document.getElementById("location-selection");
+			if (locationSelection.classList.contains("hidden")) {
+				locationSelection.classList.remove("hidden");
+			} else {
+				locationSelection.classList.add("hidden");
+			}
+		}
+
+		function switchLocation(locationName) {
+			locationTitle = document.getElementById("location-title")
+			locationTitle.innerHTML = locationName
+
+			locationSelection = document.getElementById("location-selection");
+			locationSelection.classList.add("hidden")
+		}
+	</script>
 }

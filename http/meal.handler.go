@@ -51,7 +51,7 @@ func (server *Server) GetMeals(c echo.Context) error {
 	case FormatJSON:
 		return c.JSON(http.StatusOK, Response{Success: true, Data: meals})
 	case FormatHTML:
-		return c.HTML(http.StatusOK, util.RenderComponent(components.Meals(meals)))
+		return c.HTML(http.StatusOK, util.RenderComponent(components.MealsWithDateSelector(lang, date, meals, location)))
 	}
 	return nil
 }

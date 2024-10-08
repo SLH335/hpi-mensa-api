@@ -17,8 +17,9 @@ func (server *Server) Index(c echo.Context) error {
 	if c.Path() == "/en" {
 		lang = English
 	}
+	location := Location{Id: 9601, Name: "Griebnitzsee"}
 
-	meals, err := server.MealService.Get(Location{Id: 9601}, lang, time.Now())
+	meals, err := server.MealService.Get(location, lang, time.Now())
 	if err != nil {
 		fmt.Printf("Error: %+v\n", err)
 		return c.JSON(http.StatusInternalServerError, Response{
@@ -26,5 +27,13 @@ func (server *Server) Index(c echo.Context) error {
 			Message: "failed to load meals",
 		})
 	}
-	return c.HTML(http.StatusOK, util.RenderComponent(components.Index(lang, meals)))
+	locations, err := server.LocationService.Get()
+	if err != nil {
+		fmt.Printf("Error: %+v\n", err)
+		return c.JSON(http.StatusInternalServerError, Response{
+			Success: false,
+			Message: "failed to load locations",
+		})
+	}
+	return c.HTML(http.StatusOK, util.RenderComponent(components.Index(lang, time.Now(), meals, location, locations)))
 }

@@ -10,6 +10,9 @@ templ Meals(meals []Meal) {
 	<div id="meals">
 		for _, meal := range meals {
 			<div class="m-2 rounded-xl bg-slate-200 p-2">
+				<p class="font-bold">
+					{ meal.Category.Name }
+				</p>
 				<span>{ meal.Name }</span>
 				<br/>
 				<span>{ formatPrice(meal.StudentPrice) }</span>

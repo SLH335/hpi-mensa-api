@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 
@@ -33,11 +34,13 @@ func (server *Server) GetLocations(c echo.Context) error {
 		})
 	}
 
+	location := Location{Id: 9601, Name: "Griebnitzsee"}
+
 	switch format {
 	case FormatJSON:
 		return c.JSON(http.StatusOK, Response{Success: true, Data: locations})
 	case FormatHTML:
-		return c.HTML(http.StatusOK, util.RenderComponent(components.Locations(locations)))
+		return c.HTML(http.StatusOK, util.RenderComponent(components.LocationSelector(location, locations, Language{Id: 1, Short: "de"}, time.Now())))
 	}
 	return nil
 }
