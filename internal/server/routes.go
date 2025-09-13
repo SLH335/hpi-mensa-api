@@ -1,6 +1,7 @@
 package server
 
 import (
+	"hpi-mensa/internal/mealdata/providers/stwwb"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -29,7 +30,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 func (s *Server) HelloWorldHandler(c echo.Context) error {
 	resp := map[string]string{
-		"message": "Hello World",
+		"message": "Hello "+stwwb.Provider.Name.De,
 	}
 
 	return c.JSON(http.StatusOK, resp)
