@@ -17,15 +17,14 @@ import (
 
 // Get all meals of current menu (usually current and following week) for the given location
 func getMenu(location Location) (menu []Meal, err error) {
-	jsonData, err := stwwbRequest(LocationsModel, location, LangGerman)
+	jsonData, err := stwwbRequest(MenuModel, location, LangGerman)
 	if err != nil {
 		return []Meal{}, fmt.Errorf("menu request: %w", err)
 	}
 
 	for _, plan := range jsonData.GetArray() {
-		outlet := Outlet{
-			ID: plan.GetInt("speiseplanAdvanced", "outletID"),
-		}
+		outletId := plan.GetInt("speiseplanAdvanced", "outletID")
+		outlet := outlets[outletId]
 
 		for _, meal := range plan.GetArray("speiseplanGerichtData") {
 			dishData := meal.Get("speiseplanAdvancedGericht")
@@ -49,15 +48,15 @@ func getMenu(location Location) (menu []Meal, err error) {
 			}
 
 			// Fill in meal attribute data from global state
-			allergens, err := AllergenAttribute.getAttributeData(extraData, location)
+			allergens, err := AllergenAttribute.getAttributeData(string(extraData.GetStringBytes("allergeneIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get allergen data: %w", err)
 			}
-			additives, err := AdditiveAttribute.getAttributeData(extraData, location)
+			additives, err := AdditiveAttribute.getAttributeData(string(extraData.GetStringBytes("zusatzstoffeIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get additive data: %w", err)
 			}
-			features, err := FeatureAttribute.getAttributeData(extraData, location)
+			features, err := FeatureAttribute.getAttributeData(string(extraData.GetStringBytes("zusatzstoffeIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get feature data: %w", err)
 			}
@@ -210,15 +209,18 @@ func getMealAttributes(location Location, attributeType MealAttributeType) (attr
 	return attributes, nil
 }
 
-func getOutlets() (outlets []Outlet, err error) {
+func getOutlets() (outlets map[int]Outlet, err error) {
+	outlets = map[int]Outlet{}
+
 	jsonData, err := stwwbRequest(LocationsModel, Location{}, LangGerman)
 	if err != nil {
-		return []Outlet{}, fmt.Errorf("outlets request: %w", err)
+		return map[int]Outlet{}, fmt.Errorf("outlets request: %w", err)
 	}
 
 	for _, outlet := range jsonData.GetArray() {
-		outlets = append(outlets, Outlet{
-			ID: outlet.GetInt("id"),
+		id := outlet.GetInt("id")
+		outlets[id] = Outlet{
+			ID: id,
 			Name: string(outlet.GetStringBytes("name")),
 			Location: Location{
 				ID: outlet.GetInt("locationInfo", "id"),
@@ -239,7 +241,7 @@ func getOutlets() (outlets []Outlet, err error) {
 			},
 			ContactEmail: string(outlet.GetStringBytes("contactInfo", "email")),
 			ImageLink: string(outlet.GetStringBytes("logoImage")),
-		})
+		}
 	}
 
 	return outlets, nil

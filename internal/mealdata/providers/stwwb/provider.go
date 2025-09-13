@@ -6,11 +6,13 @@ import (
 	"hpi-mensa/internal/mealdata/common/types"
 	"hpi-mensa/internal/mealdata/util"
 	"slices"
+
+	"github.com/rs/zerolog/log"
 )
 
 // Store static data in memory
 var locations []Location = []Location{}
-var outlets []Outlet = []Outlet{}
+var outlets map[int]Outlet = map[int]Outlet{} // outlets by outlet id
 var categories map[int]map[int]MealCategory = map[int]map[int]MealCategory{} // meal categories per location id
 var allergens map[int]map[int]MealAttribute = map[int]map[int]MealAttribute{} // allergens per location id
 var additives map[int]map[int]MealAttribute = map[int]map[int]MealAttribute{} // additives per location id
@@ -85,30 +87,50 @@ func (p STWWBProvider) GetMeals(location common.Location) (meals []common.Meal, 
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get meal categories: %w", err)
 		}
+		log.Debug().
+			Str("provider", Provider.Slug()).
+			Int("count", len(categories[providerLocation.ID])).
+			Msg("Loaded meal categories")
 	}
 	if len(allergens[providerLocation.ID]) == 0 {
 		allergens[providerLocation.ID], err = getMealAttributes(providerLocation, AllergenAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get allergens: %w", err)
 		}
+		log.Debug().
+			Str("provider", Provider.Slug()).
+			Int("count", len(allergens)).
+			Msg("Loaded allergens")
 	}
 	if len(additives[providerLocation.ID]) == 0 {
 		additives[providerLocation.ID], err = getMealAttributes(providerLocation, AdditiveAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get additives: %w", err)
 		}
+		log.Debug().
+			Str("provider", Provider.Slug()).
+			Int("count", len(additives[providerLocation.ID])).
+			Msg("Loaded additives")
 	}
 	if len(features[providerLocation.ID]) == 0 {
 		features[providerLocation.ID], err = getMealAttributes(providerLocation, FeatureAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get features: %w", err)
 		}
+		log.Debug().
+			Str("provider", Provider.Slug()).
+			Int("count", len(features[providerLocation.ID])).
+			Msg("Loaded meal features")
 	}
 
 	menu, err := getMenu(providerLocation)
 	if err != nil {
 		return []common.Meal{}, fmt.Errorf("get menu: %w", err)
 	}
+	log.Debug().
+		Str("provider", Provider.Slug()).
+		Int("count", len(menu)).
+		Msg("Loaded provider meals")
 
 	for _, meal := range menu {
 		meals = append(meals, common.Meal{

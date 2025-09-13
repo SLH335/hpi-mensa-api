@@ -2,14 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"hpi-mensa/internal/mealdata/common"
 	"hpi-mensa/internal/server"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -20,7 +23,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	// Listen for the interrupt signal.
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	log.Info().Msg("Shutting down gracefully, press Ctrl+C again to force")
 	stop() // Allow Ctrl+C to force shutdown
 
 	// The context is used to inform the server it has 5 seconds to finish
@@ -31,17 +34,25 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 		log.Printf("Server forced to shutdown with error: %v", err)
 	}
 
-	log.Println("Server exiting")
+	log.Info().Msg("Server exiting")
 
 	// Notify the main goroutine that the shutdown is complete
 	done <- true
 }
 
 func main() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	fmt.Println("Starting server...")
+	// Initializing meal data providers
+	err := mealdata.Init()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to initialize meal data providers")
+	}
+	log.Info().Msg("Initialized meal data providers")
+
+	// Starting HTTP server
 	server := server.NewServer()
-	fmt.Println("Started server")
+	log.Info().Msg("Started HTTP server on " + server.Addr)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
@@ -49,12 +60,12 @@ func main() {
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
 
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		panic(fmt.Sprintf("http server error: %s", err))
+		log.Panic().Err(err).Msg("HTTP server error")
 	}
 
 	// Wait for the graceful shutdown to complete
 	<-done
-	log.Println("Graceful shutdown complete.")
+	log.Info().Msg("Graceful shutdown complete.")
 }

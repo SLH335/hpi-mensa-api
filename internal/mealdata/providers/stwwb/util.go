@@ -124,13 +124,11 @@ func (attributeType MealAttributeType) getAttributeModel() (key Model, err error
 	}
 }
 
-func (attributeType MealAttributeType) getAttributeData(jsonData *fastjson.Value, location Location) (attributes []MealAttribute, err error) {
-	idKey, err := attributeType.getAttributeIDKey()
-	if err != nil {
-		return []MealAttribute{}, fmt.Errorf("attribute id key: %w", err)
+func (attributeType MealAttributeType) getAttributeData(attributeIDStr string, location Location) (attributes []MealAttribute, err error) {
+	if attributeIDStr == "" {
+		return []MealAttribute{}, nil
 	}
-
-	attributeIDs := strings.SplitSeq(string(jsonData.GetStringBytes(idKey+"s")), ",")
+	attributeIDs := strings.SplitSeq(attributeIDStr, ",")
 	for attributeIDStr := range attributeIDs {
 		attributeID, err := strconv.Atoi(attributeIDStr)
 		if err != nil {
