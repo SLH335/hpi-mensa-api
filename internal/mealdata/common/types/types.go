@@ -14,31 +14,31 @@ type Provider interface {
 }
 
 type Meal struct {
-	ID        string
-	Name      util.LangString
-	Category  util.LangString
-	Date      time.Time
-	Prices    []PriceCategory
-	Additives []MealAttribute
-	Allergens []MealAttribute
-	Features  []MealAttribute
-	Location  Location
-	Provider  Provider
+	ID        string          `json:"id"`
+	Name      util.LangString `json:"name"`
+	Category  util.LangString `json:"category"`
+	Date      time.Time       `json:"date"`
+	Prices    []PriceCategory `json:"price"`
+	Additives []MealAttribute `json:"additives"`
+	Allergens []MealAttribute `json:"allergens"`
+	Features  []MealAttribute `json:"features"`
+	Location  Location        `json:"location"`
+	Provider  Provider        `json:"-"`
 }
 
 type Location struct {
-	Slug     string
-	Name     util.LangString
-	Provider Provider
+	Slug     string          `json:"slug"`
+	Name     util.LangString `json:"name"`
+	Provider Provider        `json:"-"`
 }
 
 type PriceCategory struct {
-	Name  util.LangString
-	Price float64
+	Type  util.LangString `json:"type"`
+	Amount float64        `json:"amount"`
 }
 
 type MealAttribute struct {
-	Slug  string
-	Name  util.LangString
-	Short util.LangString
+	Slug  string          `json:"slug"`
+	Name  util.LangString `json:"name"`
+	Short util.LangString `json:"short"`
 }

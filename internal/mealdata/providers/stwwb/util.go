@@ -48,34 +48,34 @@ func parseOutletOpeningTime(jsonData *fastjson.Value, day string) (openingTime O
 func convertPriceCategories(meal Meal) (prices []common.PriceCategory) {
 	if meal.PriceStudent > 0 {
 		prices = append(prices, common.PriceCategory{
-			Name: util.LangString{
+			Type: util.LangString{
 				De: "Studi",
 				En: "Student",
 			},
-			Price: meal.PriceStudent,
+			Amount: meal.PriceStudent,
 		})
 	}
 	if meal.PriceEmployee > 0 {
 		prices = append(prices, common.PriceCategory{
-			Name: util.LangString{
+			Type: util.LangString{
 				De: "Mitarbeiter",
 				En: "Employee",
 			},
-			Price: meal.PriceEmployee,
+			Amount: meal.PriceEmployee,
 		})
 	}
 	if meal.PriceGuest > 0 {
 		prices = append(prices, common.PriceCategory{
-			Name: util.LangString{
+			Type: util.LangString{
 				De: "Gast",
 				En: "Guest",
 			},
-			Price: meal.PriceGuest,
+			Amount: meal.PriceGuest,
 		})
 	}
 
 	if len(prices) == 1 {
-		prices[0].Name = util.LangString{
+		prices[0].Type = util.LangString{
 			De: "Alle",
 			En: "All",
 		}

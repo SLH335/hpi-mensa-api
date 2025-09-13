@@ -1,8 +1,8 @@
 package util
 
 type LangString struct {
-	De string
-	En string
+	De string `json:"de"`
+	En string `json:"en"`
 }
 
 func (ls LangString) Get() string {
