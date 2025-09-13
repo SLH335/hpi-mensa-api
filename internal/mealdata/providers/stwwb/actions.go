@@ -126,6 +126,8 @@ func getLocations() (locations []Location, err error) {
 }
 
 func getMealCategories(location Location) (categories map[int]MealCategory, err error) {
+	categories = map[int]MealCategory{}
+
 	jsonDataGer, err := stwwbRequest(MealCategoryModel, location, LangGerman)
 	if err != nil {
 		return map[int]MealCategory{}, fmt.Errorf("meal categories request: %w", err)
@@ -161,6 +163,8 @@ func getMealCategories(location Location) (categories map[int]MealCategory, err 
 }
 
 func getMealAttributes(location Location, attributeType MealAttributeType) (attributes map[int]MealAttribute, err error) {
+	attributes = map[int]MealAttribute{}
+
 	model, err := attributeType.getAttributeModel()
 	if err != nil {
 		return map[int]MealAttribute{}, fmt.Errorf("get attribute model: %w", err)

@@ -3,9 +3,8 @@ package stwwb
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/common"
+	"hpi-mensa/internal/mealdata/common/types"
 	"hpi-mensa/internal/mealdata/util"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -131,8 +130,8 @@ func (attributeType MealAttributeType) getAttributeData(jsonData *fastjson.Value
 		return []MealAttribute{}, fmt.Errorf("attribute id key: %w", err)
 	}
 
-	attributeIDs := strings.Split(string(jsonData.GetStringBytes(idKey+"s")), ",")
-	for _, attributeIDStr := range attributeIDs {
+	attributeIDs := strings.SplitSeq(string(jsonData.GetStringBytes(idKey+"s")), ",")
+	for attributeIDStr := range attributeIDs {
 		attributeID, err := strconv.Atoi(attributeIDStr)
 		if err != nil {
 			return []MealAttribute{}, fmt.Errorf("convert attribute id to int: %w", err)

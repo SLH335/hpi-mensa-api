@@ -3,7 +3,7 @@ package stwwb
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/common"
+	"hpi-mensa/internal/mealdata/common/types"
 	"hpi-mensa/internal/mealdata/util"
 	"slices"
 )
