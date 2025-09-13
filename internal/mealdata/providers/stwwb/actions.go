@@ -48,15 +48,15 @@ func getMenu(location Location) (menu []Meal, err error) {
 			}
 
 			// Fill in meal attribute data from global state
-			allergens, err := AllergenAttribute.getAttributeData(string(extraData.GetStringBytes("allergeneIds")), location)
+			allergens, err := AllergenAttribute.getAttributeData(string(meal.GetStringBytes("allergeneIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get allergen data: %w", err)
 			}
-			additives, err := AdditiveAttribute.getAttributeData(string(extraData.GetStringBytes("zusatzstoffeIds")), location)
+			additives, err := AdditiveAttribute.getAttributeData(string(meal.GetStringBytes("zusatzstoffeIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get additive data: %w", err)
 			}
-			features, err := FeatureAttribute.getAttributeData(string(extraData.GetStringBytes("zusatzstoffeIds")), location)
+			features, err := FeatureAttribute.getAttributeData(string(meal.GetStringBytes("gerichtmerkmaleIds")), location)
 			if err != nil {
 				return []Meal{}, fmt.Errorf("get feature data: %w", err)
 			}
@@ -203,6 +203,7 @@ func getMealAttributes(location Location, attributeType MealAttributeType) (attr
 				De: string(attribute.GetStringBytes("name")),
 				En: englishNames[id],
 			},
+			Short: string(attribute.GetStringBytes("kuerzel")),
 		}
 	}
 

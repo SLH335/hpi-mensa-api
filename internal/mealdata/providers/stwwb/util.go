@@ -86,6 +86,10 @@ func convertPriceCategories(meal Meal) (prices []common.PriceCategory) {
 
 func convertMealAttributes(mealAttributes []MealAttribute) (attributes []common.MealAttribute) {
 	for _, mealAttribute := range mealAttributes {
+		// Skip attributes like 'no allergen' or 'no additive'
+		if strings.TrimSpace(mealAttribute.Short) == "" {
+			continue
+		}
 		attributes = append(attributes, common.MealAttribute{
 			Slug: fmt.Sprintf("%s-%d", Provider.Slug(), mealAttribute.ID),
 			Name: mealAttribute.Name,
@@ -132,7 +136,7 @@ func (attributeType MealAttributeType) getAttributeData(attributeIDStr string, l
 	for attributeIDStr := range attributeIDs {
 		attributeID, err := strconv.Atoi(attributeIDStr)
 		if err != nil {
-			return []MealAttribute{}, fmt.Errorf("convert attribute id to int: %w", err)
+			return []MealAttribute{}, fmt.Errorf("convert attribute id '%s' to int: %w", attributeIDStr, err)
 		}
 
 		attribute := MealAttribute{}
