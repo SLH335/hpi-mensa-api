@@ -1,9 +1,12 @@
 package mealdata
 
 import (
+	"errors"
 	"fmt"
 	"hpi-mensa/internal/mealdata/common/types"
 	"hpi-mensa/internal/mealdata/providers/stwwb"
+	"hpi-mensa/internal/mealdata/util"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -13,6 +16,12 @@ var providers []common.Provider = []common.Provider{
 	stwwb.Provider, // Studierendenwerk West:Brandenburg
 }
 
+// Number of active providers
+func ProviderCount() (count int) {
+	return len(providers)
+}
+
+// Initialize meal data providers
 func Init() (err error) {
 	for _, provider := range providers {
 		err = provider.Init()
@@ -25,9 +34,9 @@ func Init() (err error) {
 	return nil
 }
 
+// Get all locations from all providers
 func GetLocations() (locations []common.Location, err error) {
 	for _, provider := range providers {
-		log.Debug().Str("provider", provider.Slug()).Msg("Loading provider locations")
 		providerLocations, err := provider.GetLocations()
 		if err != nil {
 			return []common.Location{}, fmt.Errorf("%s locations: %w", provider.Slug(), err)
@@ -42,11 +51,32 @@ func GetLocations() (locations []common.Location, err error) {
 	return locations, nil
 }
 
-func GetMeals(location common.Location) (meals []common.Meal, err error) {
-	meals, err = location.Provider.GetMeals(location)
+// Fetch all currently accessible menus for a given location
+func FetchMenus(location common.Location) (menus []common.Menu, err error) {
+	menus, err = location.Provider.GetMenus(location)
 	if err != nil {
-		return []common.Meal{}, fmt.Errorf("%s meals: %w", location.Provider.Slug(), err)
+		return []common.Menu{}, fmt.Errorf("%s menus: %w", location.Provider.Slug(), err)
 	}
 
-	return meals, nil
+	return menus, nil
+}
+
+// Get meals for a given day (TODO: from the DB and fetches new meals if no menu is stored yet)
+func GetMenu(location common.Location, date time.Time) (menu common.Menu, err error) {
+	menus, err := FetchMenus(location)
+	if err != nil {
+		return common.Menu{}, fmt.Errorf("fetch menu: %w", err)
+	}
+
+	// Return menu from specified date
+	for _, menu := range menus {
+		log.Debug().
+			Int("meals", len(menu.Meals)).
+			Str("date", menu.Date.Format("2006-01-02")).
+			Msg("Loaded menu")
+		if util.SameDay(date, menu.Date) {
+			return menu, nil
+		}
+	}
+	return common.Menu{}, errors.New(fmt.Sprintf("no menu available for date %s", date.Format("2006-01-02")))
 }

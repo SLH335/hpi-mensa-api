@@ -43,7 +43,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 				Str("method", req.Method).
 				Str("path", req.URL.Path).
 				Int("status", res.Status).
-				Dur("latency", stop.Sub(start)).
+				Dur("duration", stop.Sub(start)).
+				Str("ip", c.RealIP()).
 				Msg("Handled request")
 
 			return err
@@ -90,16 +91,32 @@ func (s *Server) LocationsHandler(c echo.Context) error {
 }
 
 func (s *Server) MenuHandler(c echo.Context) error {
-	locationSlug := c.Param("location")
+	locationSlug := strings.TrimSpace(c.Param("location"))
 	if strings.TrimSpace(locationSlug) == "" {
 		log.Warn().Msg("Missing location parameter")
 		return c.JSON(http.StatusInternalServerError, map[string]any{
 			"success": false,
-			"message": fmt.Sprintf("path parameter 'location' is required"),
+			"message": "path parameter 'location' is required",
 		})
 	}
+	dateStr := strings.TrimSpace(c.QueryParam("date"))
+	var date time.Time
+	var err error
+	if dateStr == "" {
+		date = time.Now()
+		dateStr = date.Format("2006-01-02")
+	} else {
+		date, err = time.Parse("2006-01-02", dateStr)
+		if err != nil {
+			log.Warn().Str("date", dateStr).Msg("Invalid date field")
+			return c.JSON(http.StatusInternalServerError, map[string]any{
+				"success": false,
+				"message": fmt.Sprintf("'%s' is not a valid date. Required format is YYYY-MM-DD", dateStr),
+			})
+		}
+	}
 
-	log.Info().Str("location", locationSlug).Msg("Loading meals")
+	log.Info().Str("location", locationSlug).Str("date", dateStr).Msg("Loading menu")
 
 	locations, err := mealdata.GetLocations()
 	if err != nil {
@@ -124,9 +141,13 @@ func (s *Server) MenuHandler(c echo.Context) error {
 		})
 	}
 
-	meals, err := mealdata.GetMeals(location)
+	menu, err := mealdata.GetMenu(location, date)
 	if err != nil {
-		log.Error().Err(err).Str("location", locationSlug).Msg("Failed to load menu")
+		log.Error().
+			Err(err).
+			Str("location", locationSlug).
+			Str("date", dateStr).
+			Msg("Failed to load menu")
 		return c.JSON(http.StatusInternalServerError, map[string]any{
 			"success": false,
 			"message": fmt.Sprintf("Failed to load menu: %v", err),
@@ -135,12 +156,14 @@ func (s *Server) MenuHandler(c echo.Context) error {
 
 	log.Info().
 		Str("location", locationSlug).
-		Int("count", len(meals)).
-		Msg("Loaded meals successfully")
+		Str("date", dateStr).
+		Int("meals", len(menu.Meals)).
+		Msg("Loaded menu successfully")
+
 	return c.JSON(http.StatusOK, map[string]any{
 		"success": true,
-		"message": "Successfully loaded menu",
-		"data": meals,
+		"message": fmt.Sprintf("Successfully loaded menu for %s", dateStr),
+		"data": menu,
 	})
 }
 

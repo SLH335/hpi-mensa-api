@@ -46,13 +46,13 @@ func main() {
 	// Initializing meal data providers
 	err := mealdata.Init()
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to initialize meal data providers")
+		log.Fatal().Err(err).Msg("Failed to initialize meal data providers")
 	}
-	log.Info().Msg("Initialized meal data providers")
+	log.Info().Int("count", mealdata.ProviderCount()).Msg("Initialized meal data providers")
 
 	// Starting HTTP server
 	server := server.NewServer()
-	log.Info().Msg("Started HTTP server on " + server.Addr)
+	log.Info().Str("port", server.Addr).Msg("Started HTTP server")
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

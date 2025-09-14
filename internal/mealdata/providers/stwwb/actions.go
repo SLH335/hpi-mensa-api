@@ -16,15 +16,39 @@ import (
 )
 
 // Get all meals of current menu (usually current and following week) for the given location
-func getMenu(location Location) (menu []Meal, err error) {
+func getMeals(location Location) (meals []Meal, start, end time.Time, err error) {
 	jsonData, err := stwwbRequest(MenuModel, location, LangGerman)
 	if err != nil {
-		return []Meal{}, fmt.Errorf("menu request: %w", err)
+		return []Meal{}, time.Time{}, time.Time{}, fmt.Errorf("menu request: %w", err)
 	}
 
 	for _, plan := range jsonData.GetArray() {
 		outletId := plan.GetInt("speiseplanAdvanced", "outletID")
 		outlet := Provider.outlets[outletId]
+
+		// Parse start and end dates of plan and check that they exist and are valid
+		startStr := string(plan.GetStringBytes("speiseplanAdvanced", "gueltigVon"))
+		endStr := string(plan.GetStringBytes("speiseplanAdvanced", "gueltigBis"))
+		planStart, err := time.Parse(time.RFC3339, startStr)
+		if err != nil || planStart.IsZero() {
+			if planStart.IsZero() {
+				err = errors.New("date is zero")
+			}
+			return []Meal{}, time.Time{}, time.Time{}, fmt.Errorf("parsing start date: %w", err)
+		}
+		planEnd, err := time.Parse(time.RFC3339, endStr)
+		if err != nil || planEnd.IsZero() {
+			if planEnd.IsZero() {
+				err = errors.New("date is zero")
+			}
+			return []Meal{}, time.Time{}, time.Time{}, fmt.Errorf("parsing end date: %w", err)
+		}
+		if start.IsZero() || planStart.Before(start) {
+			start = planStart
+		}
+		if planEnd.After(end) {
+			end = planEnd
+		}
 
 		for _, meal := range plan.GetArray("speiseplanGerichtData") {
 			dishData := meal.Get("speiseplanAdvancedGericht")
@@ -35,7 +59,7 @@ func getMenu(location Location) (menu []Meal, err error) {
 			mealCategory := Provider.categories[location.ID][categoryID]
 			// Abort if category was not found
 			if mealCategory.ID == 0 {
-				return []Meal{}, fmt.Errorf("meal category not found: '%d'", categoryID)
+				return []Meal{}, start, end, fmt.Errorf("meal category not found: '%d'", categoryID)
 			}
 
 			dateStr := string(dishData.GetStringBytes("datum"))
@@ -44,24 +68,24 @@ func getMenu(location Location) (menu []Meal, err error) {
 			}
 			date, err := time.Parse("2006-01-02", dateStr)
 			if err != nil {
-				return []Meal{}, fmt.Errorf("parse meal date: %w", err)
+				return []Meal{}, start, end, fmt.Errorf("parse meal date: %w", err)
 			}
 
 			// Fill in meal attribute data from global state
 			allergens, err := AllergenAttribute.getAttributeData(string(meal.GetStringBytes("allergeneIds")), location)
 			if err != nil {
-				return []Meal{}, fmt.Errorf("get allergen data: %w", err)
+				return []Meal{}, start, end, fmt.Errorf("get allergen data: %w", err)
 			}
 			additives, err := AdditiveAttribute.getAttributeData(string(meal.GetStringBytes("zusatzstoffeIds")), location)
 			if err != nil {
-				return []Meal{}, fmt.Errorf("get additive data: %w", err)
+				return []Meal{}, start, end, fmt.Errorf("get additive data: %w", err)
 			}
 			features, err := FeatureAttribute.getAttributeData(string(meal.GetStringBytes("gerichtmerkmaleIds")), location)
 			if err != nil {
-				return []Meal{}, fmt.Errorf("get feature data: %w", err)
+				return []Meal{}, start, end, fmt.Errorf("get feature data: %w", err)
 			}
 
-			menu = append(menu, Meal{
+			meals = append(meals, Meal{
 				ID: dishData.GetInt("id"),
 				Name: util.LangString{
 					De: string(dishData.GetStringBytes("gerichtname")),
@@ -99,7 +123,7 @@ func getMenu(location Location) (menu []Meal, err error) {
 		}
 	}
 
-	return menu, nil
+	return meals, start, end, nil
 }
 
 func getLocations() (locations []Location, err error) {

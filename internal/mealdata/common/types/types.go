@@ -10,7 +10,14 @@ type Provider interface {
 	Name() util.LangString
 	Init() error
 	GetLocations() ([]Location, error)
-	GetMeals(Location) ([]Meal, error)
+	GetMenus(Location) ([]Menu, error)
+}
+
+type Menu struct {
+	Slug     string    `json:"slug"`
+	Date     time.Time `json:"date"`
+	Meals    []Meal    `json:"meals,nilasempty"`
+	Provider Provider  `json:"-"`
 }
 
 type Meal struct {
