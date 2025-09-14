@@ -10,36 +10,43 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Store static data in memory
-var locations []Location = []Location{}
-var outlets map[int]Outlet = map[int]Outlet{} // outlets by outlet id
-var categories map[int]map[int]MealCategory = map[int]map[int]MealCategory{} // meal categories per location id
-var allergens map[int]map[int]MealAttribute = map[int]map[int]MealAttribute{} // allergens per location id
-var additives map[int]map[int]MealAttribute = map[int]map[int]MealAttribute{} // additives per location id
-var features map[int]map[int]MealAttribute = map[int]map[int]MealAttribute{} // features per location id
+type STWWBProvider struct {
+	// Store static data in memory
+	locations []Location
+	outlets map[int]Outlet
+	categories map[int]map[int]MealCategory // meal categories per location id
+	allergens map[int]map[int]MealAttribute // allergens per location id
+	additives map[int]map[int]MealAttribute // additives per location id
+	features map[int]map[int]MealAttribute // features per location id
+}
 
-type STWWBProvider struct {}
+var Provider common.Provider = &STWWBProvider{
+	locations: []Location{},
+	outlets: map[int]Outlet{},
+	categories: map[int]map[int]MealCategory{},
+	allergens: map[int]map[int]MealAttribute{},
+	additives: map[int]map[int]MealAttribute{},
+	features: map[int]map[int]MealAttribute{},
+}
 
-var Provider STWWBProvider = STWWBProvider{}
-
-func (p STWWBProvider) Slug() (slug string) {
+func (p *STWWBProvider) Slug() (slug string) {
 	return "stwwb"
 }
 
-func (p STWWBProvider) Name() (name util.LangString) {
+func (p *STWWBProvider) Name() (name util.LangString) {
 	return util.LangString{
 		De: "Studierendenwerk West:Brandenburg",
 		En: "Studierendenwerk West:Brandenburg",
 	}
 }
 
-func (p STWWBProvider) Init() (err error) {
-	locations, err = getLocations()
+func (p *STWWBProvider) Init() (err error) {
+	p.locations, err = getLocations()
 	if err != nil {
 		return fmt.Errorf("get locations: %w", err)
 	}
 
-	outlets, err = getOutlets()
+	p.outlets, err = getOutlets()
 	if err != nil {
 		return fmt.Errorf("get outlets: %w", err)
 	}
@@ -47,9 +54,9 @@ func (p STWWBProvider) Init() (err error) {
 	return nil
 }
 
-func (p STWWBProvider) GetLocations() (locs []common.Location, err error) {
+func (p *STWWBProvider) GetLocations() (locations []common.Location, err error) {
 	slugs := []string{}
-	for _, location := range locations {
+	for _, location := range p.locations {
 		slug := location.Slug()
 		// Make sure location slugs are unique
 		if slices.Contains(slugs, slug) {
@@ -57,7 +64,7 @@ func (p STWWBProvider) GetLocations() (locs []common.Location, err error) {
 		}
 		slugs = append(slugs, slug)
 
-		locs = append(locs, common.Location{
+		locations = append(locations, common.Location{
 			Slug: slug,
 			Name: util.LangString{
 				De: location.Name,
@@ -66,13 +73,13 @@ func (p STWWBProvider) GetLocations() (locs []common.Location, err error) {
 			Provider: Provider,
 		})
 	}
-	return locs, nil
+	return locations, nil
 }
 
-func (p STWWBProvider) GetMeals(location common.Location) (meals []common.Meal, err error) {
+func (p *STWWBProvider) GetMeals(location common.Location) (meals []common.Meal, err error) {
 	// Find provider location from common location
 	providerLocation := Location{ID: -1}
-	for _, loc := range locations {
+	for _, loc := range p.locations {
 		if location.Slug == loc.Slug() {
 			providerLocation = loc
 		}
@@ -82,44 +89,48 @@ func (p STWWBProvider) GetMeals(location common.Location) (meals []common.Meal, 
 	}
 
 	// Fetch meal categories and attributes if not yet loaded
-	if len(categories[providerLocation.ID]) == 0 {
-		categories[providerLocation.ID], err = getMealCategories(providerLocation)
+	if len(p.categories[providerLocation.ID]) == 0 {
+		p.categories[providerLocation.ID], err = getMealCategories(providerLocation)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get meal categories: %w", err)
 		}
 		log.Debug().
 			Str("provider", Provider.Slug()).
-			Int("count", len(categories[providerLocation.ID])).
+			Str("location", location.Slug).
+			Int("count", len(p.categories[providerLocation.ID])).
 			Msg("Loaded meal categories")
 	}
-	if len(allergens[providerLocation.ID]) == 0 {
-		allergens[providerLocation.ID], err = getMealAttributes(providerLocation, AllergenAttribute)
+	if len(p.allergens[providerLocation.ID]) == 0 {
+		p.allergens[providerLocation.ID], err = getMealAttributes(providerLocation, AllergenAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get allergens: %w", err)
 		}
 		log.Debug().
 			Str("provider", Provider.Slug()).
-			Int("count", len(allergens)).
+			Str("location", location.Slug).
+			Int("count", len(p.allergens[providerLocation.ID])).
 			Msg("Loaded allergens")
 	}
-	if len(additives[providerLocation.ID]) == 0 {
-		additives[providerLocation.ID], err = getMealAttributes(providerLocation, AdditiveAttribute)
+	if len(p.additives[providerLocation.ID]) == 0 {
+		p.additives[providerLocation.ID], err = getMealAttributes(providerLocation, AdditiveAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get additives: %w", err)
 		}
 		log.Debug().
 			Str("provider", Provider.Slug()).
-			Int("count", len(additives[providerLocation.ID])).
+			Str("location", location.Slug).
+			Int("count", len(p.additives[providerLocation.ID])).
 			Msg("Loaded additives")
 	}
-	if len(features[providerLocation.ID]) == 0 {
-		features[providerLocation.ID], err = getMealAttributes(providerLocation, FeatureAttribute)
+	if len(p.features[providerLocation.ID]) == 0 {
+		p.features[providerLocation.ID], err = getMealAttributes(providerLocation, FeatureAttribute)
 		if err != nil {
 			return []common.Meal{}, fmt.Errorf("get features: %w", err)
 		}
 		log.Debug().
 			Str("provider", Provider.Slug()).
-			Int("count", len(features[providerLocation.ID])).
+			Str("location", location.Slug).
+			Int("count", len(p.features[providerLocation.ID])).
 			Msg("Loaded meal features")
 	}
 

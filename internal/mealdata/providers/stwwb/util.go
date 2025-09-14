@@ -142,11 +142,11 @@ func (attributeType MealAttributeType) getAttributeData(attributeIDStr string, l
 		attribute := MealAttribute{}
 		switch attributeType {
 		case AllergenAttribute:
-			attribute = allergens[location.ID][attributeID]
+			attribute = Provider.allergens[location.ID][attributeID]
 		case AdditiveAttribute:
-			attribute = additives[location.ID][attributeID]
+			attribute = Provider.additives[location.ID][attributeID]
 		case FeatureAttribute:
-			attribute = features[location.ID][attributeID]
+			attribute = Provider.features[location.ID][attributeID]
 		default:
 			return []MealAttribute{}, errors.New(fmt.Sprintf("invalid attribute type: '%d'", attributeID))
 		}

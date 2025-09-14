@@ -24,7 +24,7 @@ func getMenu(location Location) (menu []Meal, err error) {
 
 	for _, plan := range jsonData.GetArray() {
 		outletId := plan.GetInt("speiseplanAdvanced", "outletID")
-		outlet := outlets[outletId]
+		outlet := Provider.outlets[outletId]
 
 		for _, meal := range plan.GetArray("speiseplanGerichtData") {
 			dishData := meal.Get("speiseplanAdvancedGericht")
@@ -32,7 +32,7 @@ func getMenu(location Location) (menu []Meal, err error) {
 
 			// Fill in meal category data from global state
 			categoryID := dishData.GetInt("gerichtkategorieID")
-			mealCategory := categories[location.ID][categoryID]
+			mealCategory := Provider.categories[location.ID][categoryID]
 			// Abort if category was not found
 			if mealCategory.ID == 0 {
 				return []Meal{}, fmt.Errorf("meal category not found: '%d'", categoryID)
