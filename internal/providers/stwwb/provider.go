@@ -3,8 +3,7 @@ package stwwb
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/common/types"
-	"hpi-mensa/internal/mealdata/util"
+	"hpi-mensa/internal/domain/meal"
 	"slices"
 	"time"
 
@@ -34,8 +33,8 @@ func (p *STWWBProvider) Slug() (slug string) {
 	return "stwwb"
 }
 
-func (p *STWWBProvider) Name() (name util.LangString) {
-	return util.LangString{
+func (p *STWWBProvider) Name() (name meal.LangString) {
+	return meal.LangString{
 		De: "Studierendenwerk West:Brandenburg",
 		En: "Studierendenwerk West:Brandenburg",
 	}
@@ -55,19 +54,19 @@ func (p *STWWBProvider) Init() (err error) {
 	return nil
 }
 
-func (p *STWWBProvider) GetLocations() (locations []common.Location, err error) {
+func (p *STWWBProvider) GetLocations() (locations []meal.Location, err error) {
 	slugs := []string{}
 	for _, location := range p.locations {
 		slug := location.Slug()
 		// Make sure location slugs are unique
 		if slices.Contains(slugs, slug) {
-			return []common.Location{}, errors.New("aborting due to duplicate location slug")
+			return []meal.Location{}, errors.New("aborting due to duplicate location slug")
 		}
 		slugs = append(slugs, slug)
 
-		locations = append(locations, common.Location{
+		locations = append(locations, meal.Location{
 			Slug: slug,
-			Name: util.LangString{
+			Name: meal.LangString{
 				De: location.Name,
 				En: location.Name,
 			},
@@ -78,22 +77,22 @@ func (p *STWWBProvider) GetLocations() (locations []common.Location, err error) 
 }
 
 // Get all menus that are currently available via the STWWB API
-func (p *STWWBProvider) GetMenus(location common.Location) (menus []common.Menu, err error) {
+func (p *STWWBProvider) GetMenus(location meal.Location) (menus []meal.Menu, err error) {
 	// Find provider location from common location
 	providerLocation, err := p.getProviderLocation(location)
 	if err != nil {
-		return []common.Menu{}, fmt.Errorf("provider location: %w", err)
+		return []meal.Menu{}, fmt.Errorf("provider location: %w", err)
 	}
 
 	// Fetch meal categories and attributes if not yet loaded
 	err = p.fetchMealMetadata(location)
 	if err != nil {
-		return []common.Menu{}, fmt.Errorf("meal metadata: %w", err)
+		return []meal.Menu{}, fmt.Errorf("meal metadata: %w", err)
 	}
 
 	meals, start, end, err := getMeals(providerLocation)
 	if err != nil {
-		return []common.Menu{}, fmt.Errorf("get menu: %w", err)
+		return []meal.Menu{}, fmt.Errorf("get menu: %w", err)
 	}
 	log.Debug().
 		Str("provider", Provider.Slug()).
@@ -103,26 +102,26 @@ func (p *STWWBProvider) GetMenus(location common.Location) (menus []common.Menu,
 	// Generate a menu for every day that the plan is valid for
 	date := start
 	for date.Before(end) {
-		menu := common.Menu{
+		menu := meal.Menu{
 			Slug: p.Slug() + "-" + date.Format("2006-01-02"),
 			Date: date,
 			Provider: p,
 		}
 
 		// Add all meals from current date to menu
-		for _, meal := range meals {
-			if !util.SameDay(date, meal.Date) {
+		for _, m := range meals {
+			if !meal.SameDay(date, m.Date) {
 				continue
 			}
-			menu.Meals = append(menu.Meals, common.Meal{
-				ID: fmt.Sprintf("%s-%d", Provider.Slug(), meal.ID),
-				Name: meal.Name,
-				Category: meal.Category.Name,
-				Date: meal.Date,
-				Prices: convertPriceCategories(meal),
-				Allergens: convertMealAttributes(meal.Allergens),
-				Additives: convertMealAttributes(meal.Additives),
-				Features: convertMealAttributes(meal.Features),
+			menu.Meals = append(menu.Meals, meal.Meal{
+				ID: fmt.Sprintf("%s-%d", Provider.Slug(), m.ID),
+				Name: m.Name,
+				Category: m.Category.Name,
+				Date: m.Date,
+				Prices: convertPriceCategories(m),
+				Allergens: convertMealAttributes(m.Allergens),
+				Additives: convertMealAttributes(m.Additives),
+				Features: convertMealAttributes(m.Features),
 				Location: location,
 				Provider: Provider,
 			})
@@ -136,7 +135,7 @@ func (p *STWWBProvider) GetMenus(location common.Location) (menus []common.Menu,
 	return menus, nil
 }
 
-func (p *STWWBProvider) getProviderLocation(location common.Location) (providerLocation Location, err error) {
+func (p *STWWBProvider) getProviderLocation(location meal.Location) (providerLocation Location, err error) {
 	providerLocation = Location{ID: -1}
 	for _, loc := range p.locations {
 		if location.Slug == loc.Slug() {
@@ -149,7 +148,7 @@ func (p *STWWBProvider) getProviderLocation(location common.Location) (providerL
 	return providerLocation, nil
 }
 
-func (p *STWWBProvider) fetchMealMetadata(location common.Location) (err error) {
+func (p *STWWBProvider) fetchMealMetadata(location meal.Location) (err error) {
 	providerLocation, err := p.getProviderLocation(location)
 	if err != nil {
 		return fmt.Errorf("provider location: %w", err)

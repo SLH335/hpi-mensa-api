@@ -3,7 +3,7 @@ package stwwb
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/util"
+	"hpi-mensa/internal/domain/meal"
 	"io"
 	"net/http"
 	"net/url"
@@ -50,9 +50,9 @@ func getMeals(location Location) (meals []Meal, start, end time.Time, err error)
 			end = planEnd
 		}
 
-		for _, meal := range plan.GetArray("speiseplanGerichtData") {
-			dishData := meal.Get("speiseplanAdvancedGericht")
-			extraData := meal.Get("zusatzinformationen")
+		for _, mealData := range plan.GetArray("speiseplanGerichtData") {
+			dishData := mealData.Get("speiseplanAdvancedGericht")
+			extraData := mealData.Get("zusatzinformationen")
 
 			// Fill in meal category data from global state
 			categoryID := dishData.GetInt("gerichtkategorieID")
@@ -72,22 +72,22 @@ func getMeals(location Location) (meals []Meal, start, end time.Time, err error)
 			}
 
 			// Fill in meal attribute data from global state
-			allergens, err := AllergenAttribute.getAttributeData(string(meal.GetStringBytes("allergeneIds")), location)
+			allergens, err := AllergenAttribute.getAttributeData(string(mealData.GetStringBytes("allergeneIds")), location)
 			if err != nil {
 				return []Meal{}, start, end, fmt.Errorf("get allergen data: %w", err)
 			}
-			additives, err := AdditiveAttribute.getAttributeData(string(meal.GetStringBytes("zusatzstoffeIds")), location)
+			additives, err := AdditiveAttribute.getAttributeData(string(mealData.GetStringBytes("zusatzstoffeIds")), location)
 			if err != nil {
 				return []Meal{}, start, end, fmt.Errorf("get additive data: %w", err)
 			}
-			features, err := FeatureAttribute.getAttributeData(string(meal.GetStringBytes("gerichtmerkmaleIds")), location)
+			features, err := FeatureAttribute.getAttributeData(string(mealData.GetStringBytes("gerichtmerkmaleIds")), location)
 			if err != nil {
 				return []Meal{}, start, end, fmt.Errorf("get feature data: %w", err)
 			}
 
 			meals = append(meals, Meal{
 				ID: dishData.GetInt("id"),
-				Name: util.LangString{
+				Name: meal.LangString{
 					De: string(dishData.GetStringBytes("gerichtname")),
 					En: string(extraData.GetStringBytes("gerichtnameAlternative")),
 				},
@@ -175,7 +175,7 @@ func getMealCategories(location Location) (categories map[int]MealCategory, err 
 		id := category.GetInt("gerichtkategorieID")
 		categories[id] = MealCategory{
 			ID: id,
-			Name: util.LangString{
+			Name: meal.LangString{
 				De: string(category.GetStringBytes("name")),
 				En: englishNames[id],
 			},
@@ -223,7 +223,7 @@ func getMealAttributes(location Location, attributeType MealAttributeType) (attr
 		id := attribute.GetInt(idKey)
 		attributes[id] = MealAttribute{
 			ID: id,
-			Name: util.LangString{
+			Name: meal.LangString{
 				De: string(attribute.GetStringBytes("name")),
 				En: englishNames[id],
 			},

@@ -2,8 +2,8 @@ package server
 
 import (
 	"fmt"
-	"hpi-mensa/internal/mealdata/common"
-	"hpi-mensa/internal/mealdata/common/types"
+	"hpi-mensa/internal/domain/meal"
+	"hpi-mensa/internal/services"
 	"net/http"
 	"strings"
 	"time"
@@ -73,7 +73,7 @@ func (s *Server) HelloWorldHandler(c echo.Context) error {
 func (s *Server) LocationsHandler(c echo.Context) error {
 	log.Info().Msg("Loading locations")
 
-	locations, err := mealdata.GetLocations()
+	locations, err := services.GetLocations()
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to load locations")
 		return c.JSON(http.StatusInternalServerError, map[string]any{
@@ -118,7 +118,7 @@ func (s *Server) MenuHandler(c echo.Context) error {
 
 	log.Info().Str("location", locationSlug).Str("date", dateStr).Msg("Loading menu")
 
-	locations, err := mealdata.GetLocations()
+	locations, err := services.GetLocations()
 	if err != nil {
 		log.Error().Err(err).Str("location", locationSlug).Msg("Failed to load locations")
 		return c.JSON(http.StatusInternalServerError, map[string]any{
@@ -126,7 +126,7 @@ func (s *Server) MenuHandler(c echo.Context) error {
 			"message": fmt.Sprintf("Failed to load menu: %v", err),
 		})
 	}
-	location := common.Location{}
+	location := meal.Location{}
 	for _, loc := range locations {
 		if loc.Slug == locationSlug {
 			location = loc
@@ -141,7 +141,7 @@ func (s *Server) MenuHandler(c echo.Context) error {
 		})
 	}
 
-	menu, err := mealdata.GetMenu(location, date)
+	menu, err := services.GetMenu(location, date)
 	if err != nil {
 		log.Error().
 			Err(err).

@@ -3,8 +3,7 @@ package stwwb
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/common/types"
-	"hpi-mensa/internal/mealdata/util"
+	"hpi-mensa/internal/domain/meal"
 	"strconv"
 	"strings"
 
@@ -45,37 +44,37 @@ func parseOutletOpeningTime(jsonData *fastjson.Value, day string) (openingTime O
 	}
 }
 
-func convertPriceCategories(meal Meal) (prices []common.PriceCategory) {
-	if meal.PriceStudent > 0 {
-		prices = append(prices, common.PriceCategory{
-			Type: util.LangString{
+func convertPriceCategories(m Meal) (prices []meal.PriceCategory) {
+	if m.PriceStudent > 0 {
+		prices = append(prices, meal.PriceCategory{
+			Type: meal.LangString{
 				De: "Studi",
 				En: "Student",
 			},
-			Amount: meal.PriceStudent,
+			Amount: m.PriceStudent,
 		})
 	}
-	if meal.PriceEmployee > 0 {
-		prices = append(prices, common.PriceCategory{
-			Type: util.LangString{
+	if m.PriceEmployee > 0 {
+		prices = append(prices, meal.PriceCategory{
+			Type: meal.LangString{
 				De: "Mitarbeiter",
 				En: "Employee",
 			},
-			Amount: meal.PriceEmployee,
+			Amount: m.PriceEmployee,
 		})
 	}
-	if meal.PriceGuest > 0 {
-		prices = append(prices, common.PriceCategory{
-			Type: util.LangString{
+	if m.PriceGuest > 0 {
+		prices = append(prices, meal.PriceCategory{
+			Type: meal.LangString{
 				De: "Gast",
 				En: "Guest",
 			},
-			Amount: meal.PriceGuest,
+			Amount: m.PriceGuest,
 		})
 	}
 
 	if len(prices) == 1 {
-		prices[0].Type = util.LangString{
+		prices[0].Type = meal.LangString{
 			De: "Alle",
 			En: "All",
 		}
@@ -84,18 +83,18 @@ func convertPriceCategories(meal Meal) (prices []common.PriceCategory) {
 	return prices
 }
 
-func convertMealAttributes(mealAttributes []MealAttribute) (attributes []common.MealAttribute) {
-	for _, mealAttribute := range mealAttributes {
+func convertMealAttributes(mealAttributes []MealAttribute) (attributes []meal.MealAttribute) {
+	for _, att := range mealAttributes {
 		// Skip attributes like 'no allergen' or 'no additive'
-		if strings.TrimSpace(mealAttribute.Short) == "" {
+		if strings.TrimSpace(att.Short) == "" {
 			continue
 		}
-		attributes = append(attributes, common.MealAttribute{
-			Slug: fmt.Sprintf("%s-%d", Provider.Slug(), mealAttribute.ID),
-			Name: mealAttribute.Name,
-			Short: util.LangString{
-				De: mealAttribute.Short,
-				En: mealAttribute.Short,
+		attributes = append(attributes, meal.MealAttribute{
+			Slug: fmt.Sprintf("%s-%d", Provider.Slug(), att.ID),
+			Name: att.Name,
+			Short: meal.LangString{
+				De: att.Short,
+				En: att.Short,
 			},
 		})
 	}

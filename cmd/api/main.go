@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"hpi-mensa/internal/mealdata/common"
 	"hpi-mensa/internal/server"
+	"hpi-mensa/internal/services"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -41,14 +41,17 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger = log.Output(zerolog.ConsoleWriter{
+		Out: os.Stderr,
+		TimeFormat: "15:04:05",
+	})
 
 	// Initializing meal data providers
-	err := mealdata.Init()
+	err := services.InitProviders()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize meal data providers")
 	}
-	log.Info().Int("count", mealdata.ProviderCount()).Msg("Initialized meal data providers")
+	log.Info().Int("count", services.ProviderCount()).Msg("Initialized meal data providers")
 
 	// Starting HTTP server
 	server := server.NewServer()

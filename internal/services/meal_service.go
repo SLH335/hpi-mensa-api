@@ -1,18 +1,17 @@
-package mealdata
+package services
 
 import (
 	"errors"
 	"fmt"
-	"hpi-mensa/internal/mealdata/common/types"
-	"hpi-mensa/internal/mealdata/providers/stwwb"
-	"hpi-mensa/internal/mealdata/util"
+	"hpi-mensa/internal/domain/meal"
+	"hpi-mensa/internal/providers/stwwb"
 	"time"
 
 	"github.com/rs/zerolog/log"
 )
 
 // Active meal data providers
-var providers []common.Provider = []common.Provider{
+var providers []meal.Provider = []meal.Provider{
 	stwwb.Provider, // Studierendenwerk West:Brandenburg
 }
 
@@ -22,7 +21,7 @@ func ProviderCount() (count int) {
 }
 
 // Initialize meal data providers
-func Init() (err error) {
+func InitProviders() (err error) {
 	for _, provider := range providers {
 		err = provider.Init()
 		if err != nil {
@@ -35,11 +34,11 @@ func Init() (err error) {
 }
 
 // Get all locations from all providers
-func GetLocations() (locations []common.Location, err error) {
+func GetLocations() (locations []meal.Location, err error) {
 	for _, provider := range providers {
 		providerLocations, err := provider.GetLocations()
 		if err != nil {
-			return []common.Location{}, fmt.Errorf("%s locations: %w", provider.Slug(), err)
+			return []meal.Location{}, fmt.Errorf("%s locations: %w", provider.Slug(), err)
 		}
 		locations = append(locations, providerLocations...)
 		log.Debug().
@@ -52,20 +51,20 @@ func GetLocations() (locations []common.Location, err error) {
 }
 
 // Fetch all currently accessible menus for a given location
-func FetchMenus(location common.Location) (menus []common.Menu, err error) {
+func FetchMenus(location meal.Location) (menus []meal.Menu, err error) {
 	menus, err = location.Provider.GetMenus(location)
 	if err != nil {
-		return []common.Menu{}, fmt.Errorf("%s menus: %w", location.Provider.Slug(), err)
+		return []meal.Menu{}, fmt.Errorf("%s menus: %w", location.Provider.Slug(), err)
 	}
 
 	return menus, nil
 }
 
 // Get meals for a given day (TODO: from the DB and fetches new meals if no menu is stored yet)
-func GetMenu(location common.Location, date time.Time) (menu common.Menu, err error) {
+func GetMenu(location meal.Location, date time.Time) (menu meal.Menu, err error) {
 	menus, err := FetchMenus(location)
 	if err != nil {
-		return common.Menu{}, fmt.Errorf("fetch menu: %w", err)
+		return meal.Menu{}, fmt.Errorf("fetch menu: %w", err)
 	}
 
 	// Return menu from specified date
@@ -74,9 +73,9 @@ func GetMenu(location common.Location, date time.Time) (menu common.Menu, err er
 			Int("meals", len(menu.Meals)).
 			Str("date", menu.Date.Format("2006-01-02")).
 			Msg("Loaded menu")
-		if util.SameDay(date, menu.Date) {
+		if meal.SameDay(date, menu.Date) {
 			return menu, nil
 		}
 	}
-	return common.Menu{}, errors.New(fmt.Sprintf("no menu available for date %s", date.Format("2006-01-02")))
+	return meal.Menu{}, errors.New(fmt.Sprintf("no menu available for date %s", date.Format("2006-01-02")))
 }

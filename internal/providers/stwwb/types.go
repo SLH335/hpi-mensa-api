@@ -1,7 +1,7 @@
 package stwwb
 
 import (
-	"hpi-mensa/internal/mealdata/util"
+	"hpi-mensa/internal/domain/meal"
 	"time"
 )
 
@@ -24,7 +24,7 @@ const (
 
 type Meal struct {
 	ID             int
-	Name           util.LangString
+	Name           meal.LangString
 	Category       MealCategory
 	Date           time.Time
 	IsActive       bool
@@ -89,13 +89,13 @@ type Coords struct {
 
 type MealCategory struct {
 	ID       int
-	Name     util.LangString
+	Name     meal.LangString
 	Location Location
 }
 
 type MealAttribute struct {
 	ID    int
-	Name  util.LangString
+	Name  meal.LangString
 	Short string
 }
 

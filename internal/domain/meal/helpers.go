@@ -1,11 +1,6 @@
-package util
+package meal
 
 import "time"
-
-type LangString struct {
-	De string `json:"de"`
-	En string `json:"en"`
-}
 
 func SameDay(time1, time2 time.Time) bool {
 	y1, m1, d1 := time1.Date()
